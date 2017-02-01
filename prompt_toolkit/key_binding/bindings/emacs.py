@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.filters import Condition, emacs_mode, has_selection, emacs_insert_mode, has_arg, is_searching, control_is_searchable, is_multiline
 from prompt_toolkit.completion import CompleteEvent
 
@@ -318,86 +317,21 @@ def load_emacs_open_in_editor_bindings():
 def load_emacs_search_bindings():
     key_bindings = KeyBindings()
     handle = key_bindings.add
+    from . import search
 
-    @handle(Keys.ControlG, filter=is_searching)
-    @handle(Keys.ControlC, filter=is_searching)
-    # NOTE: the reason for not also binding Escape to this one, is that we want
-    #       Alt+Enter to accept input directly in incremental search mode.
-    def _(event):
-        """
-        Abort an incremental search and restore the original line.
-        """
-        event.current_buffer.reset()
-        event.app.layout.pop_focus()
+    # NOTE: We don't bind 'Escape' to 'abort_search'. The reason is that we
+    #       want Alt+Enter to accept input directly in incremental search mode.
 
-    @handle(Keys.Enter, filter=is_searching)
-    def _(event):
-        """
-        When enter pressed in isearch, quit isearch mode. (Multiline
-        isearch would be too complicated.)
-        """
-        search_control = event.app.layout.current_control
-        prev_control = event.app.layout.previous_control
-        search_state = prev_control.search_state
+    handle(Keys.ControlR)(search.start_reverse_incremental_search)
+    handle(Keys.ControlS)(search.start_forward_incremental_search)
 
-        # Update search state.
-        if search_control.buffer.text:
-            search_state.text = search_control.buffer.text
-
-        # Apply search.
-        prev_control.buffer.apply_search(search_state, include_current_position=True)
-
-        # Add query to history of search line.
-        search_control.buffer.append_to_history()
-        search_control.buffer.reset()
-
-        # Focus previous document again.
-        event.app.layout.pop_focus()
-
-    @handle(Keys.ControlR, filter=control_is_searchable)
-    def _(event):
-        control = event.app.layout.current_control
-        search_state = control.search_state
-
-        search_state.direction = SearchDirection.BACKWARD
-        event.app.layout.current_control = control.search_buffer_control
-
-    @handle(Keys.ControlS, filter=control_is_searchable)
-    def _(event):
-        control = event.app.layout.current_control
-        search_state = control.search_state
-
-        search_state.direction = SearchDirection.FORWARD
-        event.app.layout.current_control = control.search_buffer_control
-
-    def incremental_search(app, direction, count=1):
-        " Apply search, but keep search buffer focussed. "
-        assert is_searching(app)
-
-        search_control = app.layout.current_control
-        prev_control = app.layout.previous_control
-        search_state = prev_control.search_state
-
-        # Update search_state.
-        direction_changed = search_state.direction != direction
-
-        search_state.text = search_control.buffer.text
-        search_state.direction = direction
-
-        # Apply search to current buffer.
-        if not direction_changed:
-            prev_control.buffer.apply_search(
-                search_state, include_current_position=False, count=count)
-
-    @handle(Keys.ControlR, filter=is_searching)
-    @handle(Keys.Up, filter=is_searching)
-    def _(event):
-        incremental_search(event.app, SearchDirection.BACKWARD, count=event.arg)
-
-    @handle(Keys.ControlS, filter=is_searching)
-    @handle(Keys.Down, filter=is_searching)
-    def _(event):
-        incremental_search(event.app, SearchDirection.FORWARD, count=event.arg)
+    handle(Keys.ControlC)(search.abort_search)
+    handle(Keys.ControlG)(search.abort_search)
+    handle(Keys.ControlR)(search.reverse_incremental_search)
+    handle(Keys.ControlS)(search.forward_incremental_search)
+    handle(Keys.Up)(search.reverse_incremental_search)
+    handle(Keys.Down)(search.forward_incremental_search)
+    handle(Keys.Enter)(search.accept_search)
 
     return ConditionalKeyBindings(key_bindings, emacs_mode)
 

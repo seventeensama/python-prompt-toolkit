@@ -39,7 +39,7 @@ from .history import InMemoryHistory, DynamicHistory
 from .input.defaults import create_input
 from .application import Application
 from .key_binding.defaults import load_key_bindings
-from .key_binding.key_bindings import KeyBindings, DynamicRegistry, MergedKeyBindings, ConditionalKeyBindings, KeyBindingsBase
+from .key_binding.key_bindings import KeyBindings, DynamicKeyBindings, merge_key_bindings, ConditionalKeyBindings, KeyBindingsBase
 from .keys import Keys
 from .layout import Window, HSplit, FloatContainer, Float
 from .layout.containers import ConditionalContainer, Align
@@ -480,14 +480,12 @@ class Prompt(object):
             layout=Layout(layout, default_buffer_window),
             style=DynamicStyle(lambda: self.style or DEFAULT_STYLE),
             clipboard=DynamicClipboard(lambda: self.clipboard),
-            key_bindings=MergedKeyBindings([
+            key_bindings=merge_key_bindings(
                 ConditionalKeyBindings(
-                    MergedKeyBindings([
-                        default_bindings,
-                        prompt_bindings]),
+                    merge_key_bindings(default_bindings, prompt_bindings),
                     dyncond('include_default_key_bindings')),
-                DynamicRegistry(lambda: self.extra_key_bindings),
-            ]),
+                DynamicKeyBindings(lambda: self.extra_key_bindings),
+            ),
             get_title=self._get_title,
             mouse_support=dyncond('mouse_support'),
             editing_mode=editing_mode,

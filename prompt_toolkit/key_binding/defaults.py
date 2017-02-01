@@ -5,7 +5,7 @@ Default key bindings.::
     app = Application(key_bindings=key_bindings)
 """
 from __future__ import unicode_literals
-from prompt_toolkit.key_binding.key_bindings import ConditionalKeyBindings, MergedKeyBindings
+from prompt_toolkit.key_binding.key_bindings import ConditionalKeyBindings, merge_key_bindings
 from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_abort_and_exit_bindings, load_basic_system_bindings, load_auto_suggestion_bindings, load_mouse_bindings
 from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings, load_extra_emacs_page_navigation_bindings
 from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings, load_extra_vi_page_navigation_bindings
@@ -45,7 +45,7 @@ def load_key_bindings(
     enable_extra_page_navigation = to_app_filter(enable_extra_page_navigation)
     enable_auto_suggest_bindings = to_app_filter(enable_auto_suggest_bindings)
 
-    return MergedKeyBindings([
+    return merge_key_bindings(
         # Load basic bindings.
         load_basic_bindings(),
         load_mouse_bindings(),
@@ -86,4 +86,4 @@ def load_key_bindings(
         # suggestion binding when a suggestion is available.)
         ConditionalKeyBindings(load_auto_suggestion_bindings(),
                                enable_auto_suggest_bindings),
-    ])
+    )

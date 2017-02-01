@@ -12,7 +12,7 @@ from .input.base import Input
 from .input.defaults import create_input
 from .key_binding.defaults import load_key_bindings
 from .key_binding.key_processor import KeyProcessor
-from .key_binding.key_bindings import KeyBindings, KeyBindingsBase, MergedKeyBindings, ConditionalKeyBindings
+from .key_binding.key_bindings import KeyBindings, KeyBindingsBase, merge_key_bindings, ConditionalKeyBindings
 from .key_binding.vi_state import ViState
 from .keys import Keys
 from .layout.layout import Layout
@@ -430,18 +430,20 @@ class Application(object):
                 signal.SIGWINCH, self._on_resize)
 
         def done():
-            # Render UI in 'done' state.
-            raw_mode.__exit__(None, None, None)
-            self._redraw(render_as_done=True)
-            self.renderer.reset()
-            self._is_running = False
+            try:
+                # Render UI in 'done' state.
+                raw_mode.__exit__(None, None, None)
+                self._redraw(render_as_done=True)
+                self.renderer.reset()
 
-            # Clear event loop handlers.
-            if previous_input:
-                loop.set_input(previous_input, previous_cb)
+                # Clear event loop handlers.
+                if previous_input:
+                    loop.set_input(previous_input, previous_cb)
 
-            if has_sigwinch:
-                loop.add_signal_handler(signal.SIGWINCH, previous_winch_handler)
+                if has_sigwinch:
+                    loop.add_signal_handler(signal.SIGWINCH, previous_winch_handler)
+            finally:
+                self._is_running = False
 
         f.add_done_callback(lambda _: done())
         return f, done
@@ -896,7 +898,7 @@ class _CombinedRegistry(KeyBindingsBase):
         key_bindings = [b.global_key_bindings for b in key_bindings
                         if b and b.global_key_bindings]
 
-        others_key_bindings = MergedKeyBindings(
+        others_key_bindings = merge_key_bindings(*
             [self.app.key_bindings] + key_bindings)
 
         ui_key_bindings = current_control.get_key_bindings(self.app)
@@ -911,10 +913,10 @@ class _CombinedRegistry(KeyBindingsBase):
             def is_not_modal(app):
                 return not ui_key_bindings.modal
 
-            return MergedKeyBindings([
+            return merge_key_bindings(
                 ConditionalKeyBindings(others_key_bindings, is_not_modal),
                 ui_key_bindings.key_bindings,
-            ])
+            )
 
     @property
     def _key_bindings(self):

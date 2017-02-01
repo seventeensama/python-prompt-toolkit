@@ -46,5 +46,6 @@ And one prepared menu:
 """
 from __future__ import unicode_literals
 
+from .layout import *
 from .containers import *
 from .controls import *

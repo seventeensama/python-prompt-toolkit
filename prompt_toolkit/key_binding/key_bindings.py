@@ -7,9 +7,9 @@ for a pressed key.
 
 Typical usage::
 
-    r = KeyBindings()
+    kb = KeyBindings()
 
-    @r.add(Keys.ControlX, Keys.ControlC, filter=INSERT)
+    @kb.add(Keys.ControlX, Keys.ControlC, filter=INSERT)
     def handler(event):
         # Handle ControlX-ControlC key sequence.
         pass
@@ -17,10 +17,22 @@ Typical usage::
 It is also possible to combine multiple KeyBindings objects. We do this in the
 default key bindings. There are some KeyBindings objects that contain the Emacs
 bindings, while others contain the Vi bindings. They are merged together using
-a `MergedKeyBindings`.
+`merge_key_bindings`.
 
 We also have a `ConditionalKeyBindings` object that can enable/disable a group of
 key bindings at once.
+
+
+It is also possible to add a filter to a function, before a key binding has
+been assigned, through the `key_binding` decorator.::
+
+    # First define a key handler with the `filter`.
+    @key_binding(filter=condition)
+    def my_key_binding(event):
+        ...
+
+    # Later, add it to the key bindings.
+    kb.add(Keys.A, my_key_binding)
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -35,8 +47,8 @@ __all__ = (
     'KeyBindingsBase',
     'KeyBindings',
     'ConditionalKeyBindings',
-    'MergedKeyBindings',
-    'DynamicRegistry',
+    'merge_key_bindings',
+    'DynamicKeyBindings',
 )
 
 
@@ -155,9 +167,18 @@ class KeyBindings(KeyBindingsBase):
                 return func
         else:
             def decorator(func):
-                self.bindings.append(
-                    _Binding(keys, func, filter=filter, eager=eager,
-                             save_before=save_before))
+                if isinstance(func, _Binding):
+                    # We're adding an existing _Binding object.
+                    self.bindings.append(
+                        _Binding(
+                            keys, func.handler,
+                            filter=func.filter & filter,
+                            eager=eager | func.eager,
+                            save_before=func.save_before))
+                else:
+                    self.bindings.append(
+                        _Binding(keys, func, filter=filter, eager=eager,
+                                 save_before=save_before))
                 self._clear_cache()
 
                 return func
@@ -240,9 +261,26 @@ class KeyBindings(KeyBindingsBase):
         return self._get_bindings_starting_with_keys_cache.get(keys, get)
 
 
+def key_binding(filter=True, eager=False, save_before=None):
+    """
+    Decorator that turn a function into a `_Binding` object. This can be added
+    to a registry when a key binding is assigned.
+    """
+    filter = to_app_filter(filter)
+    eager = to_app_filter(eager)
+    save_before = save_before or (lambda e: True)
+    keys = ()
+
+    def decorator(function):
+        return _Binding(keys, function, filter=filter, eager=eager,
+                        save_before=save_before)
+
+    return decorator
+
+
 class _Proxy(KeyBindingsBase):
     """
-    Common part for ConditionalKeyBindings and MergedKeyBindings.
+    Common part for ConditionalKeyBindings and _MergedKeyBindings.
     """
     def __init__(self):
         # `KeyBindings` to be synchronized with all the others.
@@ -322,7 +360,7 @@ class ConditionalKeyBindings(_Proxy):
             self._last_version = expected_version
 
 
-class MergedKeyBindings(_Proxy):
+class _MergedKeyBindings(_Proxy):
     """
     Merge multiple registries of key bindings into one.
 
@@ -353,7 +391,18 @@ class MergedKeyBindings(_Proxy):
             self._last_version = expected_version
 
 
-class DynamicRegistry(_Proxy):
+def merge_key_bindings(*bindings):
+    """
+    Merge multiple `Keybinding` objects together.
+
+    Usage::
+
+        bindings = merge_key_bindings(bindings1, bindings2, ...)
+    """
+    return _MergedKeyBindings(bindings)
+
+
+class DynamicKeyBindings(_Proxy):
     """
     KeyBindings class that can dynamically returns any KeyBindings.
 

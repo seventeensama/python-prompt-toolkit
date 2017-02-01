@@ -10,7 +10,7 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SYSTEM_BUFFER, SearchDirection
 from prompt_toolkit.filters import has_focus, has_arg, has_completions, has_validation_error, is_searching, Always, is_done, emacs_mode, vi_mode, vi_navigation_mode
 from prompt_toolkit.filters import to_app_filter
-from prompt_toolkit.key_binding.key_bindings import KeyBindings, MergedKeyBindings, ConditionalKeyBindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings, ConditionalKeyBindings
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.token import Token
@@ -112,10 +112,10 @@ class SystemToolbarControl(BufferControl):
             self.system_buffer.reset(append_to_history=True)
             event.app.layout.pop_focus()
 
-        return MergedKeyBindings([
+        return merge_key_bindings(
             ConditionalKeyBindings(emacs_bindings, emacs_mode),
             ConditionalKeyBindings(vi_bindings, vi_mode),
-        ])
+        )
 
     def get_key_bindings(self, app):
         return UIControlKeyBindings(

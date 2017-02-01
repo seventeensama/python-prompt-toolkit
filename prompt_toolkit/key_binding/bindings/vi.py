@@ -1700,114 +1700,42 @@ def load_vi_open_in_editor_bindings():
 def load_vi_search_bindings():
     key_bindings = KeyBindings()
     handle = key_bindings.add
+    from . import search
 
     @Condition
     def reverse_vi_search_direction(app):
         return app.reverse_vi_search_direction(app)
 
-    @handle('/', filter=(vi_navigation_mode|vi_selection_mode)&~reverse_vi_search_direction&control_is_searchable)
-    @handle('?', filter=(vi_navigation_mode|vi_selection_mode)&reverse_vi_search_direction&control_is_searchable)
-    @handle(Keys.ControlS, filter=control_is_searchable)
-    def _(event):
-        """
-        Vi-style forward search.
-        """
-        control = event.app.layout.current_control
-        search_state = control.search_state
-
-        # Set the ViState.
-        search_state.direction = SearchDirection.FORWARD
-        event.app.vi_state.input_mode = InputMode.INSERT
-
-        # Focus search buffer.
-        event.app.layout.current_control = control.search_buffer_control
-
-    @handle('?', filter=(vi_navigation_mode|vi_selection_mode)&~reverse_vi_search_direction&control_is_searchable)
-    @handle('/', filter=(vi_navigation_mode|vi_selection_mode)&reverse_vi_search_direction&control_is_searchable)
-    @handle(Keys.ControlR, filter=control_is_searchable)
-    def _(event):
-        """
-        Vi-style backward search.
-        """
-        control = event.app.layout.current_control
-        search_state = control.search_state
-
-        # Set the ViState.
-        search_state.direction = SearchDirection.BACKWARD
-        event.app.vi_state.input_mode = InputMode.INSERT
-
-        # Focus search buffer.
-        event.app.layout.current_control = control.search_buffer_control
-
-    @handle(Keys.Enter, filter=is_searching)
-    def _(event):
-        """
-        Apply the search. (At the / or ? prompt.)
-        """
-        search_control = event.app.layout.current_control
-        prev_control = event.app.layout.previous_control
-        search_state = prev_control.search_state
-
-        # Update search state.
-        if search_control.buffer.text:
-            search_state.text = search_control.buffer.text
-
-        # Apply search.
-        prev_control.buffer.apply_search(
-            search_state, include_current_position=True)
-
-        # Add query to history of search line.
-        search_control.buffer.append_to_history()
-        search_control.buffer.reset()
-
-        # Focus previous document again.
-        event.app.vi_state.input_mode = InputMode.NAVIGATION
-        event.app.layout.pop_focus()
-
-    def incremental_search(app, direction, count=1):
-        " Apply search, but keep search buffer focussed. "
-        assert is_searching(app)
-
-        search_control = app.layout.current_control
-        prev_control = app.layout.previous_control
-        search_state = prev_control.search_state
-
-        # Update search_state.
-        direction_changed = search_state.direction != direction
-
-        search_state.text = search_control.buffer.text
-        search_state.direction = direction
-
-        # Apply search to current buffer.
-        if not direction_changed:
-            prev_control.buffer.apply_search(
-                search_state, include_current_position=False, count=count)
-
-    @handle(Keys.ControlR, filter=is_searching)
-    def _(event):
-        incremental_search(event.app, SearchDirection.BACKWARD, count=event.arg)
-
-    @handle(Keys.ControlS, filter=is_searching)
-    def _(event):
-        incremental_search(event.app, SearchDirection.FORWARD, count=event.arg)
-
     @Condition
     def search_buffer_is_empty(app):
-        """ Returns True when the search buffer is empty. """
+        " Returns True when the search buffer is empty. "
         return app.current_buffer.text == ''
 
-    @handle(Keys.Escape, filter=is_searching)
-    @handle(Keys.ControlC, filter=is_searching)
-    @handle(Keys.ControlH, filter=is_searching & search_buffer_is_empty)
-    @handle(Keys.Backspace, filter=is_searching & search_buffer_is_empty)
-    def _(event):
-        """
-        Cancel search.
-        """
-        event.app.current_buffer.reset()
-        event.app.vi_state.input_mode = InputMode.NAVIGATION
+    # Vi-style forward search.
+    handle('/', filter=(vi_navigation_mode|vi_selection_mode)&~reverse_vi_search_direction) \
+        (search.start_forward_incremental_search)
+    handle('?', filter=(vi_navigation_mode|vi_selection_mode)&reverse_vi_search_direction) \
+        (search.start_forward_incremental_search)
+    handle(Keys.ControlS) \
+        (search.start_forward_incremental_search)
 
-        event.app.layout.pop_focus()
+    # Vi-style backward search.
+    handle('?', filter=(vi_navigation_mode|vi_selection_mode)&~reverse_vi_search_direction) \
+        (search.start_reverse_incremental_search)
+    handle('/', filter=(vi_navigation_mode|vi_selection_mode)&reverse_vi_search_direction) \
+        (search.start_reverse_incremental_search)
+    handle(Keys.ControlR)(search.start_reverse_incremental_search)
+
+    # Apply the search. (At the / or ? prompt.)
+    handle(Keys.Enter, filter=is_searching)(search.accept_search)
+
+    handle(Keys.ControlR, filter=is_searching)(search.reverse_incremental_search)
+    handle(Keys.ControlS, filter=is_searching)(search.forward_incremental_search)
+
+    handle(Keys.Escape)(search.abort_search)
+    handle(Keys.ControlC)(search.abort_search)
+    handle(Keys.ControlH, filter=search_buffer_is_empty)(search.abort_search)
+    handle(Keys.Backspace, filter=search_buffer_is_empty)(search.abort_search)
 
     return ConditionalKeyBindings(key_bindings, vi_mode)
 

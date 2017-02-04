@@ -9,7 +9,7 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
 from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
-from prompt_toolkit.key_binding.key_bindings import KeyBindings, MergedKeyBindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align, to_window, FloatContainer, Float, Container
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl, UIControlKeyBindings
@@ -345,10 +345,10 @@ style = style_from_pygments(style_dict={
 application = Application(
     loop=loop,
     layout=Layout(root_container, focussed_window=yes_button.__pt_container__()),
-    key_bindings=MergedKeyBindings([
+    key_bindings=merge_key_bindings(
         load_key_bindings(),
         bindings,
-    ]),
+    ),
     style=style,
 
     # Let's add mouse support!

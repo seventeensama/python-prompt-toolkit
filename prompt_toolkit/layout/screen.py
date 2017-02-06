@@ -131,6 +131,31 @@ class Screen(object):
             for x, char in row.items():
                 b[y][x] = _CHAR_CACHE[char.char, token]
 
+    def fill_area(self, write_position, token=None, char=None):
+        """
+        Fill the content of this area, using the given `token` and character.
+        """
+        xmin = write_position.xpos
+        xmax = write_position.xpos + write_position.width
+        char_cache = _CHAR_CACHE
+        data_buffer = self.data_buffer
+
+        if token:
+            prepend_token = tuple(token) + (':', )
+        else:
+            prepend_token = ()
+
+        for y in range(write_position.ypos, write_position.ypos + write_position.height):
+            row = data_buffer[y]
+            for x in range(xmin, xmax):
+                cell = row[x]
+                c = cell.char
+
+                if char and c.isspace():
+                    c = char
+
+                row[x] = char_cache[c, prepend_token + cell.token]
+
 
 class WritePosition(object):
     def __init__(self, xpos, ypos, width, height, extended_height=None):

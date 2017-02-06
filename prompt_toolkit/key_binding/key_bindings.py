@@ -391,13 +391,13 @@ class _MergedKeyBindings(_Proxy):
             self._last_version = expected_version
 
 
-def merge_key_bindings(*bindings):
+def merge_key_bindings(bindings):
     """
     Merge multiple `Keybinding` objects together.
 
     Usage::
 
-        bindings = merge_key_bindings(bindings1, bindings2, ...)
+        bindings = merge_key_bindings([bindings1, bindings2, ...])
     """
     return _MergedKeyBindings(bindings)
 

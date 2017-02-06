@@ -9,7 +9,7 @@ from six import with_metaclass, text_type
 from six.moves import range
 
 from .controls import UIControl, TokenListControl, UIContent, DummyControl
-from .dimension import Dimension, sum_layout_dimensions, max_layout_dimensions
+from .dimension import Dimension, sum_layout_dimensions, max_layout_dimensions, to_dimension
 from .margins import Margin
 from .screen import Point, WritePosition, _CHAR_CACHE
 from .utils import token_list_to_text, explode_tokens, token_list_width
@@ -89,6 +89,22 @@ def _window_too_small():
         [(Token.WindowTooSmall, ' Window too small... ')]))
 
 
+class VerticalAlign:
+    " Alignment for `HSplit`. "
+    TOP = 'TOP'
+    CENTER = 'CENTER'
+    BOTTOM = 'BOTTOM'
+    JUSTIFY = 'JUSTIFY'
+
+
+class HorizontalAlign:
+    " Alignment for `VSplit`. "
+    LEFT = 'LEFT'
+    CENTER = 'CENTER'
+    RIGHT = 'RIGHT'
+    JUSTIFY = 'JUSTIFY'
+
+
 class HSplit(Container):
     """
     Several layouts, one stacked above/under the other.
@@ -106,16 +122,19 @@ class HSplit(Container):
         with the `Application` and the list of used dimensions. (As a
         list of integers.)
     """
-    def __init__(self, children, window_too_small=None,
-                 get_dimensions=None, report_dimensions_callback=None):
+    def __init__(self, children, window_too_small=None, align=VerticalAlign.JUSTIFY,
+                 get_dimensions=None, report_dimensions_callback=None, padding=0, token=None):
         assert window_too_small is None or isinstance(window_too_small, Container)
         assert get_dimensions is None or callable(get_dimensions)
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
 
         self.children = [to_container(c) for c in children]
         self.window_too_small = window_too_small or _window_too_small()
+        self.align = align
         self.get_dimensions = get_dimensions
         self.report_dimensions_callback = report_dimensions_callback
+        self.padding = padding
+        self.token = token
 
     def preferred_width(self, app, max_available_width):
         if self.children:
@@ -126,11 +145,17 @@ class HSplit(Container):
 
     def preferred_height(self, app, width, max_available_height):
         dimensions = [c.preferred_height(app, width, max_available_height) for c in self.children]
+        dimensions.append(Dimension.exact(self._total_padding))
         return sum_layout_dimensions(dimensions)
 
     def reset(self):
         for c in self.children:
             c.reset()
+
+    @property
+    def _total_padding(self):
+        " Sum of the space required in between children. "
+        return self.padding * (len(self.children) - 1)
 
     def write_to_screen(self, app, screen, mouse_handlers, write_position):
         """
@@ -153,9 +178,23 @@ class HSplit(Container):
             xpos = write_position.xpos
             width = write_position.width
 
+            # Shift 'ypos' in the case of top/center/bottom alignment.
+            if self.align != VerticalAlign.JUSTIFY:
+                total_height = sum(sizes)
+                available_height = write_position.height - self._total_padding
+
+                if self.align == VerticalAlign.BOTTOM:
+                    ypos += available_height - total_height
+                elif self.align == VerticalAlign.CENTER:
+                    ypos += (available_height - total_height) // 2
+
             for s, c in zip(sizes, self.children):
                 c.write_to_screen(app, screen, mouse_handlers, WritePosition(xpos, ypos, width, s))
                 ypos += s
+                ypos += self.padding
+
+        if self.token:
+            screen.fill_area(write_position, token=self.token)
 
     def _divide_heigths(self, app, write_position):
         """
@@ -165,6 +204,13 @@ class HSplit(Container):
         if not self.children:
             return []
 
+        # Substract padding.
+        height = write_position.height
+        extended_height = write_position.extended_height
+
+        height -= self._total_padding
+        extended_height -= self._total_padding
+
         # Calculate heights.
         given_dimensions = self.get_dimensions(app) if self.get_dimensions else None
 
@@ -172,7 +218,7 @@ class HSplit(Container):
             if given_dimensions and given_dimensions[index] is not None:
                 return given_dimensions[index]
             else:
-                return c.preferred_height(app, write_position.width, write_position.extended_height)
+                return c.preferred_height(app, write_position.width, extended_height)
 
         dimensions = [get_dimension_for_child(c, index) for index, c in enumerate(self.children)]
 
@@ -181,7 +227,7 @@ class HSplit(Container):
 
         # If there is not enough space for both.
         # Don't do anything.
-        if sum_dimensions.min > write_position.extended_height:
+        if sum_dimensions.min > extended_height:
             return
 
         # Find optimal sizes. (Start with minimal size, increase until we cover
@@ -194,14 +240,14 @@ class HSplit(Container):
 
         i = next(child_generator)
 
-        while sum(sizes) < min(write_position.extended_height, sum_dimensions.preferred):
+        while sum(sizes) < min(extended_height, sum_dimensions.preferred):
             # Increase until we meet at least the 'preferred' size.
             if sizes[i] < dimensions[i].preferred:
                 sizes[i] += 1
             i = next(child_generator)
 
-        if not app.is_done:
-            while sum(sizes) < min(write_position.height, sum_dimensions.max):
+        if self.align == VerticalAlign.JUSTIFY and not app.is_done:
+            while sum(sizes) < min(height, sum_dimensions.max):
                 # Increase until we use all the available space. (or until "max")
                 if sizes[i] < dimensions[i].max:
                     sizes[i] += 1
@@ -234,19 +280,23 @@ class VSplit(Container):
         with the `Application` and the list of used dimensions. (As a
         list of integers.)
     """
-    def __init__(self, children, window_too_small=None,
-                 get_dimensions=None, report_dimensions_callback=None):
+    def __init__(self, children, window_too_small=None, align=HorizontalAlign.JUSTIFY,
+                 get_dimensions=None, report_dimensions_callback=None, padding=0, token=None):
         assert window_too_small is None or isinstance(window_too_small, Container)
         assert get_dimensions is None or callable(get_dimensions)
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
 
         self.children = [to_container(c) for c in children]
         self.window_too_small = window_too_small or _window_too_small()
+        self.align = align
         self.get_dimensions = get_dimensions
         self.report_dimensions_callback = report_dimensions_callback
+        self.padding = padding
+        self.token = token
 
     def preferred_width(self, app, max_available_width):
         dimensions = [c.preferred_width(app, max_available_width) for c in self.children]
+        dimensions.append(Dimension.exact(self._total_padding))
         return sum_layout_dimensions(dimensions)
 
     def preferred_height(self, app, width, max_available_height):
@@ -262,6 +312,11 @@ class VSplit(Container):
         for c in self.children:
             c.reset()
 
+    @property
+    def _total_padding(self):
+        " Sum of the space required in between children. "
+        return self.padding * (len(self.children) - 1)
+
     def _divide_widths(self, app, width):
         """
         Return the widths for all columns.
@@ -269,6 +324,9 @@ class VSplit(Container):
         """
         if not self.children:
             return []
+
+        # Substract padding.
+        width -= self._total_padding
 
         # Calculate widths.
         given_dimensions = self.get_dimensions(app) if self.get_dimensions else None
@@ -305,11 +363,12 @@ class VSplit(Container):
                 sizes[i] += 1
             i = next(child_generator)
 
-        while sum(sizes) < min(width, sum_dimensions.max):
-            # Increase until we use all the available space.
-            if sizes[i] < dimensions[i].max:
-                sizes[i] += 1
-            i = next(child_generator)
+        if self.align == HorizontalAlign.JUSTIFY:
+            while sum(sizes) < min(width, sum_dimensions.max):
+                # Increase until we use all the available space.
+                if sizes[i] < dimensions[i].max:
+                    sizes[i] += 1
+                i = next(child_generator)
 
         return sizes
 
@@ -334,7 +393,8 @@ class VSplit(Container):
                 app, screen, mouse_handlers, write_position)
             return
 
-        # Calculate heights, take the largest possible, but not larger than write_position.extended_height.
+        # Calculate heights, take the largest possible, but not larger than
+        # write_position.extended_height.
         heights = [child.preferred_height(app, width, write_position.extended_height).preferred
                    for width, child in zip(sizes, self.children)]
         height = max(write_position.height, min(write_position.extended_height, max(heights)))
@@ -343,9 +403,23 @@ class VSplit(Container):
         ypos = write_position.ypos
         xpos = write_position.xpos
 
+        # Shift 'ypos' in the case of top/center/bottom alignment.
+        if self.align != HorizontalAlign.JUSTIFY:
+            total_width = sum(sizes)
+            available_width = write_position.width - self._total_padding
+
+            if self.align == HorizontalAlign.RIGHT:
+                xpos += available_width - total_width
+            elif self.align == HorizontalAlign.CENTER:
+                xpos += (available_width - total_width) // 2
+
         for s, c in zip(sizes, self.children):
             c.write_to_screen(app, screen, mouse_handlers, WritePosition(xpos, ypos, s, height))
             xpos += s
+            xpos += self.padding
+
+        if self.token:
+            screen.fill_area(write_position, token=self.token)
 
     def walk(self):
         """ Walk through children. """
@@ -925,8 +999,8 @@ class Window(Container):
                  cursorline_token=Token.CursorLine, cursorcolumn_token=Token.CursorColumn,
                  align=Align.LEFT, token=None, get_token=None, char=None, get_char=None):
         assert content is None or isinstance(content, UIControl)
-        assert width is None or isinstance(width, Dimension)
-        assert height is None or isinstance(height, Dimension)
+        assert width is None or isinstance(width, (Dimension, int))
+        assert height is None or isinstance(height, (Dimension, int))
         assert get_width is None or callable(get_width)
         assert get_height is None or callable(get_height)
         assert width is None or get_width is None
@@ -959,8 +1033,8 @@ class Window(Container):
         self.scroll_offsets = scroll_offsets or ScrollOffsets()
         self.get_vertical_scroll = get_vertical_scroll
         self.get_horizontal_scroll = get_horizontal_scroll
-        self._width = get_width or (lambda app: width)
-        self._height = get_height or (lambda app: height)
+        self._width = get_width or (lambda app: to_dimension(width))  #  XXX: drop get_width and get_height.
+        self._height = get_height or (lambda app: to_dimension(height))
         self.get_colorcolumns = get_colorcolumns or (lambda app: [])
         self.cursorline_token = cursorline_token
         self.cursorcolumn_token = cursorcolumn_token
@@ -1386,32 +1460,15 @@ class Window(Container):
         return visible_line_to_row_col, rowcol_to_yx
 
     def _apply_token(self, app, new_screen, write_position):
-        xmin = write_position.xpos
-        xmax = write_position.xpos + write_position.width
-        char_cache = _CHAR_CACHE
-        data_buffer = new_screen.data_buffer
-
-        def fill(token, char):
-            if token:
-                prepend_token = tuple(token) + (':', )
-            else:
-                prepend_token = ()
-
-            for y in range(write_position.ypos, write_position.ypos + write_position.height):
-                row = data_buffer[y]
-                for x in range(xmin, xmax):
-                    cell = row[x]
-                    row[x] = char_cache[char or cell.char, prepend_token + cell.token]
-
         # Apply `self.char` and `self.token`.
         token = self.token if self.get_token is None else self.get_token(app)
         char = self.char if self.get_char is None else self.get_char(app)
         if char or token:
-            fill(token, char)
+            new_screen.fill_area(write_position, token=token, char=char)
 
         # Add 'Token.Focussed' if this window got the focus.
         if app.layout.current_window == self:
-            fill(Token.Focussed, None)
+            new_screen.fill_area(write_position, token=Token.Focussed)
 
     def _highlight_digraph(self, app, new_screen):
         """

@@ -267,16 +267,18 @@ class TokenListControl(UIControl):
 
         # If there is a `Token.SetCursorPosition` in the token list, set the
         # cursor position here.
-        def get_cursor_position():
-            SetCursorPosition = Token.SetCursorPosition
-
+        def get_cursor_position(token=Token.SetCursorPosition):
             for y, line in enumerate(token_lines):
                 x = 0
-                for token, text in line:
-                    if token == SetCursorPosition:
+                for t, text in line:
+                    if t == token:
                         return Point(x=x, y=y)
                     x += len(text)
             return None
+
+        # If there is a `Token.SetMenuPosition`, set the menu over here.
+        def get_menu_position():
+            return get_cursor_position(Token.SetMenuPosition)
 
         # Create content, or take it from the cache.
         key = (tuple(tokens_with_mouse_handlers), width)
@@ -284,7 +286,8 @@ class TokenListControl(UIControl):
         def get_content():
             return UIContent(get_line=lambda i: token_lines[i],
                              line_count=len(token_lines),
-                             cursor_position=get_cursor_position())
+                             cursor_position=get_cursor_position(),
+                             menu_position=get_menu_position())
 
         return self._content_cache.get(key, get_content)
 

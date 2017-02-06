@@ -112,10 +112,10 @@ class SystemToolbarControl(BufferControl):
             self.system_buffer.reset(append_to_history=True)
             event.app.layout.pop_focus()
 
-        return merge_key_bindings(
+        return merge_key_bindings([
             ConditionalKeyBindings(emacs_bindings, emacs_mode),
             ConditionalKeyBindings(vi_bindings, vi_mode),
-        )
+        ])
 
     def get_key_bindings(self, app):
         return UIControlKeyBindings(

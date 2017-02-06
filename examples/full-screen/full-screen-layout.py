@@ -12,10 +12,10 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
-from prompt_toolkit.key_binding.key_bindings import KeyBindings, MergedKeyBindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align
-from prompt_toolkit.layout.controls import BufferControl, FillControl, TokenListControl
+from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.token import Token
@@ -53,10 +53,8 @@ body = VSplit([
 
     # A vertical line in the middle. We explicitely specify the width, to make
     # sure that the layout engine will not try to divide the whole width by
-    # three for all these windows. The `FillControl` will simply fill the whole
-    # window by repeating this character.
-    Window(width=D.exact(1),
-           content=FillControl.from_character_and_token('|', token=Token.Line)),
+    # three for all these windows.
+    Window(width=D.exact(1), char='|', token=Token.Line),
 
     # Display the Result buffer on the right.
     right_window,
@@ -82,8 +80,7 @@ root_container = HSplit([
            align=Align.CENTER),
 
     # Horizontal separator.
-    Window(height=D.exact(1),
-           content=FillControl.from_character_and_token('-', token=Token.Line)),
+    Window(height=D.exact(1), char='-', token=Token.Line),
 
     # The 'body', like defined above.
     body,
@@ -132,7 +129,7 @@ def _(event):
     """
     event.app.set_return_value(None)
 
-all_bindings = MergedKeyBindings([
+all_bindings = merge_key_bindings([
     kb,
     load_key_bindings()
 ])

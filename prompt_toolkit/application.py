@@ -898,7 +898,7 @@ class _CombinedRegistry(KeyBindingsBase):
         key_bindings = [b.global_key_bindings for b in key_bindings
                         if b and b.global_key_bindings]
 
-        others_key_bindings = merge_key_bindings(*
+        others_key_bindings = merge_key_bindings(
             [self.app.key_bindings] + key_bindings)
 
         ui_key_bindings = current_control.get_key_bindings(self.app)
@@ -913,10 +913,10 @@ class _CombinedRegistry(KeyBindingsBase):
             def is_not_modal(app):
                 return not ui_key_bindings.modal
 
-            return merge_key_bindings(
+            return merge_key_bindings([
                 ConditionalKeyBindings(others_key_bindings, is_not_modal),
                 ui_key_bindings.key_bindings,
-            )
+            ])
 
     @property
     def _key_bindings(self):

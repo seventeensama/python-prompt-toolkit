@@ -8,6 +8,7 @@ __all__ = (
     'Dimension',
     'sum_layout_dimensions',
     'max_layout_dimensions',
+    'to_dimension',
 )
 
 
@@ -81,7 +82,6 @@ class Dimension(object):
 #    def __add__(self, other):
 #        return sum_layout_dimensions([self, other])
 
-
 def sum_layout_dimensions(dimensions):
     """
     Sum a list of :class:`.Dimension` instances.
@@ -118,6 +118,21 @@ def max_layout_dimensions(dimensions):
     else:
         return Dimension()
 
+
+def to_dimension(value):
+    """
+    Turn the given object into a `Dimension` object.
+    """
+    if value is None:
+        return Dimension()
+    if isinstance(value, int):
+        return Dimension.exact(value)
+    if isinstance(value, Dimension):
+        return value
+    if callable(value):
+        return to_dimension(value())
+
+    raise ValueError('Not an integer or Dimension object.')
 
 
 # For backward-compatibility.

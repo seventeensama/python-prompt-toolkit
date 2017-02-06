@@ -45,7 +45,7 @@ def load_key_bindings(
     enable_extra_page_navigation = to_app_filter(enable_extra_page_navigation)
     enable_auto_suggest_bindings = to_app_filter(enable_auto_suggest_bindings)
 
-    return merge_key_bindings(
+    return merge_key_bindings([
         # Load basic bindings.
         load_basic_bindings(),
         load_mouse_bindings(),
@@ -86,4 +86,4 @@ def load_key_bindings(
         # suggestion binding when a suggestion is available.)
         ConditionalKeyBindings(load_auto_suggestion_bindings(),
                                enable_auto_suggest_bindings),
-    )
+    ])

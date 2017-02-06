@@ -480,12 +480,12 @@ class Prompt(object):
             layout=Layout(layout, default_buffer_window),
             style=DynamicStyle(lambda: self.style or DEFAULT_STYLE),
             clipboard=DynamicClipboard(lambda: self.clipboard),
-            key_bindings=merge_key_bindings(
+            key_bindings=merge_key_bindings([
                 ConditionalKeyBindings(
-                    merge_key_bindings(default_bindings, prompt_bindings),
+                    merge_key_bindings([default_bindings, prompt_bindings]),
                     dyncond('include_default_key_bindings')),
                 DynamicKeyBindings(lambda: self.extra_key_bindings),
-            ),
+            ]),
             get_title=self._get_title,
             mouse_support=dyncond('mouse_support'),
             editing_mode=editing_mode,

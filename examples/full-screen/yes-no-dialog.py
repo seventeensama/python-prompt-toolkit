@@ -11,13 +11,14 @@ from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align, to_window, FloatContainer, Float, Container
+from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align, to_window, FloatContainer, Float, Container, ConditionalContainer
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl, UIControlKeyBindings
 from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.styles.from_pygments import style_from_pygments
 from prompt_toolkit.token import Token
+from prompt_toolkit.filters import Condition
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.eventloop.base import EventLoop
 from pygments.lexers import HtmlLexer
@@ -76,7 +77,7 @@ class Frame(object):
     """
     Draw a border around a container.
     """
-    def __init__(self, loop, body, title=''):
+    def __init__(self, loop, body, title='', token=None):
         assert isinstance(loop, EventLoop)
 
         fill = partial(Window, token=Token.Window.Border)
@@ -84,7 +85,10 @@ class Frame(object):
         self.container = HSplit([
             VSplit([
                 fill(width=1, height=1, char=BORDER.TOP_LEFT),
-                Label(loop, '{}'.format(title), token=Token.Frame.Label),
+                fill(char=BORDER.HORIZONTAL),
+                fill(width=1, height=1, char='|'),
+                Label(loop, ' {} '.format(title), token=Token.Frame.Label),
+                fill(width=1, height=1, char='|'),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char=BORDER.TOP_RIGHT),
             ]),
@@ -98,7 +102,23 @@ class Frame(object):
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char=BORDER.BOTTOM_RIGHT),
             ]),
-        ])
+        ], token=token)
+
+    def __pt_container__(self):
+        return self.container
+
+
+class Shadow(object):
+    def __init__(self, loop, body):
+        self.container = FloatContainer(
+            content=body,
+            floats=[
+                Float(bottom=-1, height=1, left=1, right=-1,
+                    content=Window(token=Token.Shadow)),
+                Float(bottom=-1, top=1, width=1, right=-1,
+                    content=Window(token=Token.Shadow)),
+                ]
+            )
 
     def __pt_container__(self):
         return self.container
@@ -122,13 +142,13 @@ class Box(object):
         self.body = body
 
         self.container = HSplit([
-            Window(height=self.padding_top, char=char),
+            Window(height=D(min=self.padding_top), char=char),
             VSplit([
-                Window(height=self.padding_left, char=char),
+                Window(width=D(min=self.padding_left), char=char),
                 body,
-                Window(height=self.padding_right, char=char),
+                Window(width=D(min=self.padding_right), char=char),
             ]),
-            Window(height=self.padding_bottom, char=char),
+            Window(height=D(min=self.padding_bottom), char=char),
         ], token=token)
 
     def __pt_container__(self):
@@ -169,70 +189,107 @@ class CheckBox(object):
 
 
 class MenuContainer(object):
-    def __init__(self, body, menus=''):
+    def __init__(self, body, menu_items=None):
+        assert isinstance(menu_items, list) and \
+            all(isinstance(i, MenuItem) for i in menu_items)
+
         self.body = body
+        self.menu_items = menu_items
+        self.selected_menu = 0
+
+        # Key bindings.
+        kb = KeyBindings()
+
+        @kb.add(Keys.Left)
+        def _(event):
+            self.selected_menu = (self.selected_menu - 1) % len(self.menu_items)
+
+        @kb.add(Keys.Right)
+        def _(event):
+            self.selected_menu = (self.selected_menu + 1) % len(self.menu_items)
+
+        @kb.add(Keys.Up)
+        def _(event):
+            menu = self.menu_items[self.selected_menu]
+            menu.selected_item = (menu.selected_item - 1) % len(menu.children)
+
+        @kb.add(Keys.Down)
+        def _(event):
+            menu = self.menu_items[self.selected_menu]
+            menu.selected_item = (menu.selected_item + 1) % len(menu.children)
+
+        # Controls.
+        self.control = TokenListControl(
+            self._get_menu_tokens,
+            get_key_bindings=lambda app: UIControlKeyBindings(kb, modal=False))
+
+        self.window = Window(
+            height=1,
+            content=self.control,
+            token=Token.MenuBar)
 
         self.container = FloatContainer(
             content=HSplit([
                 # The titlebar.
-                Window(height=1,
-                       content=TokenListControl(self._get_menu_tokens),
-                       token=Token.MenuBar),
-
-            #    # Horizontal separator.
-            #    Window(height=1,
-            #           content=FillControl(char='-'),
-            #           token=Token.Line),
+                self.window,
 
                 # The 'body', like defined above.
                 body,
             ]),
             floats=[
                 Float(xcursor=True, ycursor=True,#top=1, left=1,
-                    content=self._file_menu(), transparant=False),
+                    content=self._submenu(), transparant=False),
 #                Float(content=dialog()),
             ]
         )
 
     def _get_menu_tokens(self, app):
-        return [
-            (Token.MenuBar, ' '),
-            (Token.Menu, 'File'),
-            (Token.SetMenuPosition, ' '),
-            (Token.MenuBar, ' Edit '),
-            (Token.MenuBar, ' Info '),
-        ]
+        result = []
+        for i, item in enumerate(self.menu_items):
+            result.append((Token.MenuBar, ' '))
+            if i == self.selected_menu:
+                result.append((Token.SetMenuPosition, ''))
+            result.append((Token.Menu, item.text))
+        return result
 
-    def _file_menu(self):
+    def _submenu(self):
         def get_tokens(app):
-            return [
-                (Token.Menu, ' Open \n'),
-                (Token.Menu, '------------\n'),
-                (Token.Menu, ' Save \n'),
-                (Token.Menu, ' Save as '),
-            ]
+            selected_menu = self.menu_items[self.selected_menu]
 
-        return Window(TokenListControl(get_tokens), token=Token.Menu)
+            result = []
+            for i, item in enumerate(selected_menu.children):
+                if i == selected_menu.selected_item:
+                    result.append((Token.SetCursorPosition, ''))
+
+                result.append((Token, ' {} '.format(item.text)))
+
+                if i != len(selected_menu.children) - 1:
+                    result.append((Token.Menu, '\n'))
+            return result
+
+        return ConditionalContainer(
+            content=Window(
+                TokenListControl(get_tokens),
+                cursorline=True,
+                token=Token.Menu),
+            filter=Condition(lambda app: app.layout.current_window == self.window))
 
     def __pt_container__(self):
         return self.container
 
 
 class MenuItem(object):
-    def __init__(self, text='', handler=None, submenu=None, shortcut=None):
+    def __init__(self, text='', handler=None, children=None, shortcut=None):
         self.text = text
         self.handler = handler
-        self.submenu = submenu
+        self.children = children
         self.shortcut = shortcut
-
-class Menu(Container):
-    def __init__(self, items):
-        control = TokenListControl(self._get_tokens)
+        self.selected_item = 0
 
 
 class Button(object):
     def __init__(self, text, action=None, width=12):
-        assert callable(action)
+        assert action is None or callable(action)
         assert isinstance(width, int)
 
         self.text = text
@@ -247,37 +304,27 @@ class Button(object):
             align=Align.CENTER,
             height=1,
             width=width,
-            get_token=self._get_token)
-
-    def _get_token(self, app):
-        if app.layout.current_control == self.control:
-            return Token.Button.Focussed
-        else:
-            return Token.Button
+            token=Token.Button,
+            dont_extend_width=True,
+            dont_extend_height=True)
 
     def _get_tokens(self, app):
         token = Token.Button
         text = ('{:^%s}' % (self.width - 2)).format(self.text)
 
-        if app.layout.current_control == self.control:
-            return [
-                (token.Arrow | token.Focussed, '<'),
-                (token.Text | token.Focussed, text),
-                (token.Arrow | token.Focussed, '>'),
-            ]
-        else:
-            return [
-                (token.Arrow, '<'),
-                (token.Text, text),
-                (token.Arrow, '>'),
-            ]
+        return [
+            (token.Arrow, '<'),
+            (token.Text, text),
+            (token.Arrow, '>'),
+        ]
 
     def _get_key_bindings(self, app):
         kb = KeyBindings()
         @kb.add(' ')
         @kb.add(Keys.Enter)
         def _(event):
-            self.action(app)
+            if self.action is not None:
+                self.action(app)
 
         return UIControlKeyBindings(kb, modal=False)
 
@@ -339,8 +386,24 @@ checkbox2 = CheckBox_(text='Checkbox')
 root_container = HSplit([
     VSplit([
 #        Frame_(title='Test', body=Label('hello world\ntest')),
-        Frame_(body=Label_(text='right frame\ncontent')),
-        Frame_(title='Hello', body=Label_(text='right frame\ncontent')),
+        Frame_(body=Label_(text='Left frame\ncontent')),
+        Box_(
+            body=Shadow(loop,
+                Frame_(
+                    title='The custom window',
+                    body=HSplit([
+                        Label_(text='right frame\ncontent'),
+                        Box_(
+                            body=VSplit([
+                                Button('Yes'),
+                                Button('No'),
+                            ], padding=1),
+                        )
+                    ]),
+                    token=Token.Dialog)),
+            padding=3,
+            token=Token.RightTopPane,
+        )
     ]),
     VSplit([
         Frame_(body=textfield),
@@ -363,7 +426,23 @@ root_container = HSplit([
     ),
 ])
 
-root_container = MenuContainer(root_container)
+root_container = MenuContainer(root_container, menu_items=[
+    MenuItem('File', children=[
+        MenuItem('Open'),
+        MenuItem('Save'),
+        MenuItem('Save as...'),
+        MenuItem('----'),
+        MenuItem('Exit'),
+        ]),
+    MenuItem('Edit', children=[
+        MenuItem('Cut'),
+        MenuItem('Copy'),
+        MenuItem('Paste'),
+    ]),
+    MenuItem('Info', children=[
+        MenuItem('About'),
+    ]),
+])
 
 # Global key bindings.
 
@@ -371,7 +450,7 @@ bindings = KeyBindings()
 
 widgets = [to_window(w) for w in
     (yes_button, no_button, textfield, textfield2)
-] + [checkbox1.window, checkbox2.window]
+] + [checkbox1.window, checkbox2.window, root_container.window]
 
 
 @bindings.add(Keys.Tab)
@@ -388,19 +467,28 @@ def _(event):
 
 
 style = style_from_pygments(style_dict={
-    Token.Button.Text: '#888888',
-#    Token.Button.Focussed: 'reverse',
     Token.Button.Arrow: 'bold',
-#    Token.Button.Focussed: 'bg:#880000 #ffffff',
-#    Token.TextArea: 'bg:#ffffaa',
-    Token.Focussed: 'reverse',
     Token.Label: '#888888 reverse',
     Token.Window.Border: '#888888',
 
-    Token.MenuBar: 'bg:#0000ff #ffff00',
+    Token.MenuBar: 'bg:#00ff00 #000000',
     Token.Menu: 'bg:#008888 #ffffff',
     Token.DialogTitle: 'bg:#444444 #ffffff',
     Token.DialogBody: 'bg:#888888',
+    Token.CursorLine: 'reverse',
+    Token.Focussed: 'reverse',
+    #Token.Shadow: '#ff0000 underline noinherit',
+   # Token.Menu| 
+    #Token.Window.Border|
+    Token.Window.Border|Token.Shadow: 'bg:#ff0000',
+    Token.Menu|Token.Shadow: 'bg:#ff0000',
+    Token.RightTopPane: 'bg:#0000ff',
+    Token.RightTopPane | Token.Shadow: 'bg:#000088',
+
+    Token.Focussed | Token.Button: 'bg:#ff0000 noinherit',
+
+    Token.RightTopPane | Token.Dialog: 'bg:#ffffff #000000',
+    Token.RightTopPane | Token.Frame.Label: '#ff0000 bold',
 })
 
 

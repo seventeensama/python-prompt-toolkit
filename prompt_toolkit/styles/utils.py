@@ -11,6 +11,8 @@ def split_token_in_parts(token):
     """
     Take a Token, and turn it in a list of tokens, by splitting
     it on ':' (taking that as a separator.)
+
+    (This returns a `tuple` of tuples, usable for hashing.)
     """
     result = []
     current = []
@@ -22,24 +24,26 @@ def split_token_in_parts(token):
         else:
             current.append(part)
 
-    return result
+    return tuple(sorted(result))
 
 
 def merge_attrs(list_of_attrs):
     """
     Take a list of :class:`.Attrs` instances and merge them into one.
-    Every `Attr` in the list can override the styling of the previous one.
+    Every `Attr` in the list can override the styling of the previous one. So,
+    the last one has highest priority.
     """
-    result = DEFAULT_ATTRS
+    def _or(*values):
+        " Take first not-None value, starting at the end. "
+        for v in values[::-1]:
+            if v is not None:
+                return v
 
-    for attr in list_of_attrs:
-        result = Attrs(
-            color=attr.color or result.color,
-            bgcolor=attr.bgcolor or result.bgcolor,
-            bold=attr.bold or result.bold,
-            underline=attr.underline or result.underline,
-            italic=attr.italic or result.italic,
-            blink=attr.blink or result.blink,
-            reverse=attr.reverse or result.reverse)
-
-    return result
+    return Attrs(
+        color=_or('', *[a.color for a in list_of_attrs]),
+        bgcolor=_or('', *[a.bgcolor for a in list_of_attrs]),
+        bold=_or(False, *[a.bold for a in list_of_attrs]),
+        underline=_or(False, *[a.underline for a in list_of_attrs]),
+        italic=_or(False, *[a.italic for a in list_of_attrs]),
+        blink=_or(False, *[a.blink for a in list_of_attrs]),
+        reverse=_or(False, *[a.reverse for a in list_of_attrs]))

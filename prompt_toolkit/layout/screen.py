@@ -151,7 +151,7 @@ class Screen(object):
                 cell = row[x]
                 c = cell.char
 
-                if char and c.isspace():
+                if char:# and c.isspace():
                     c = char
 
                 row[x] = char_cache[c, prepend_token + cell.token]

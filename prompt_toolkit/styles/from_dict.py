@@ -5,10 +5,13 @@ This is very similar to the Pygments style dictionary, with some additions:
 - Support for reverse and blink.
 - Support for ANSI color names. (These will map directly to the 16 terminal
   colors.)
+- Any element can have multiple tokens. E.g. Token.A|Token.B.
+  The ``|`` operation can be used to combine multiple tokens.
 """
 from collections import Mapping
+import itertools
 
-from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES
+from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
 from .defaults import DEFAULT_STYLE_EXTENSIONS
 from .utils import merge_attrs, split_token_in_parts
 from six.moves import range
@@ -37,6 +40,12 @@ def _colorformat(text):
         return text
 
     raise ValueError('Wrong color format %r' % text)
+
+
+# Attributes, when they are not filled in by a style. None means that we take
+# the value from the parent.
+_EMPTY_ATTRS = Attrs(color=None, bgcolor=None, bold=None, underline=None,
+                     italic=None, blink=None, reverse=None)
 
 
 def style_from_dict(style_dict, include_defaults=True):
@@ -71,17 +80,11 @@ def style_from_dict(style_dict, include_defaults=True):
     # (Loop through the tokens in order. Sorting makes sure that
     # we process the parent first.)
     for ttype, styledef in sorted(style_dict.items()):
-        # Start from parent Attrs or default Attrs.
-        attrs = DEFAULT_ATTRS
-
-        if 'noinherit' not in styledef:
-            for i in range(1, len(ttype) + 1):
-                try:
-                    attrs = token_to_attrs[ttype[:-i]]
-                except KeyError:
-                    pass
-                else:
-                    break
+        # Start from default Attrs.
+        if 'noinherit' in styledef:
+            attrs = DEFAULT_ATTRS
+        else:
+            attrs = _EMPTY_ATTRS
 
         # Now update with the given attributes.
         for part in styledef.split():
@@ -117,13 +120,12 @@ def style_from_dict(style_dict, include_defaults=True):
                 pass
 
             # Colors.
-
             elif part.startswith('bg:'):
                 attrs = attrs._replace(bgcolor=_colorformat(part[3:]))
             else:
                 attrs = attrs._replace(color=_colorformat(part))
 
-        token_to_attrs[ttype] = attrs
+        token_to_attrs[split_token_in_parts(ttype)] = attrs
 
     return _StyleFromDict(token_to_attrs)
 
@@ -132,6 +134,12 @@ class _StyleFromDict(Style):
     """
     Turn a dictionary that maps `Token` to `Attrs` into a style class.
 
+    The algorithm is as follows.
+    - If a given element has the ``Token.A.B.C|Token.X.Y.Z`` tokens.
+      then we first look whether there is a style given for ABC|XYZ, if not,
+      then we walk through all the parents. These are AB|XYZ and ABC|XY. We check
+      whether a style for any of the parents was given.
+
     :param token_to_attrs: Dictionary that maps `Token` to `Attrs`.
     """
     def __init__(self, token_to_attrs):
@@ -139,9 +147,41 @@ class _StyleFromDict(Style):
 
     def get_attrs_for_token(self, token):
         # Split Token.
-        list_of_attrs = []
-        for token in split_token_in_parts(token):
-            list_of_attrs.append(self.token_to_attrs.get(token, DEFAULT_ATTRS))
+        parts = split_token_in_parts(token)
+        parts = tuple(sorted(parts, reverse=True))
+
+        # Find all tokens combinations that represent a parent of this token.
+        combos = []
+        def get_combos(combo):
+            combos.append(tuple(sorted(combo)))
+
+            # Find smaller (parent) combinations.
+            for i, part in enumerate(combo):
+                smaller_parent = combo[:i] + (part[:-1], ) + combo[i + 1:]
+                smaller_parent = filter(None, smaller_parent)
+                smaller_parent = tuple(sorted(smaller_parent))
+                if smaller_parent:
+                    get_combos(smaller_parent)
+        get_combos(parts)
+
+        # Order them according to their importance. More precise matches have
+        # higher priority.
+        def flattened_len(items):
+            return sum(len(i) for i in items)
+
+        combos = sorted(combos, key=flattened_len)
+
+        # Get list of Attrs, according to matches in our Style.
+        list_of_attrs = [DEFAULT_ATTRS]
+
+        for combo in combos:
+            try:
+                attrs = self.token_to_attrs[combo]
+            except KeyError:
+                pass
+            else:
+                list_of_attrs.append(attrs)
+
         return merge_attrs(list_of_attrs)
 
     def invalidation_hash(self):

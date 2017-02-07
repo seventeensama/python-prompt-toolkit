@@ -28,7 +28,7 @@ Attrs = namedtuple('Attrs', 'color bgcolor bold underline italic blink reverse')
 """
 
 #: The default `Attrs`.
-DEFAULT_ATTRS = Attrs(color=None, bgcolor=None, bold=False, underline=False,
+DEFAULT_ATTRS = Attrs(color='', bgcolor='', bold=False, underline=False,
                       italic=False, blink=False, reverse=False)
 
 

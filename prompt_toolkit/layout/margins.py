@@ -180,11 +180,24 @@ class ScrollbarMargin(Margin):
                 ])
 
             # Scrollbar body.
+            Button = Token.Scrollbar.Button
+            Background = Token.Scrollbar.Background
+            Start = Token.Scrollbar.Start
+            End = Token.Scrollbar.End
+
             for i in range(window_height):
                 if is_scroll_button(i):
-                    result.append((Token.Scrollbar.Button, ' '))
+                    if not is_scroll_button(i + 1):
+                        # Give the last cell a different token, because we
+                        # want to underline this.
+                        result.append((Button | End, ' '))
+                    else:
+                        result.append((Button, ' '))
                 else:
-                    result.append((Token.Scrollbar, ' '))
+                    if is_scroll_button(i + 1):
+                        result.append((Background | Start, ' '))
+                    else:
+                        result.append((Background, ' '))
                 result.append((Token, '\n'))
 
             # Down arrow

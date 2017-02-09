@@ -74,9 +74,11 @@ DEFAULT_STYLE_EXTENSIONS = {
     Token.Menu.Completions.MultiColumnMeta:       'bg:#aaaaaa #000000',
 
     # Scrollbars.
-    Token.Scrollbar:                              'bg:#888888',
-    Token.Scrollbar.Button:                       'bg:#444444',
-    Token.Scrollbar.Arrow:                        'bg:#222222 #888888 bold',
+    Token.Scrollbar.Background:                   '',
+    Token.Scrollbar.Button:                       'bg:#888888',
+    Token.Scrollbar.Start:                        'underline #ffffff',
+    Token.Scrollbar.End:                          'underline #000000',
+    Token.Scrollbar.Arrow:                        'noinherit bold',
 
     # Auto suggestion text.
     Token.AutoSuggestion:                         '#666666',

@@ -37,7 +37,18 @@ __all__ = (
 
 
 class BORDER:
-    " Box drawing characters. "
+    " Box drawing characters. (Thin) "
+    HORIZONTAL = '\u2500'
+    VERTICAL = '\u2502'
+    TOP_LEFT = '\u250c'
+    TOP_RIGHT = '\u2510'
+    BOTTOM_LEFT = '\u2514'
+    BOTTOM_RIGHT = '\u2518'
+    LIGHT_VERTICAL = '\u2501'
+
+
+class WIDE_BORDER:
+    " Box drawing characters. (Wide) "
     HORIZONTAL = '\u2501'
     VERTICAL = '\u2503'
     TOP_LEFT = '\u250f'
@@ -45,6 +56,12 @@ class BORDER:
     BOTTOM_LEFT = '\u2517'
     BOTTOM_RIGHT = '\u251b'
     LIGHT_VERTICAL = '\u2502'
+
+
+class SHADE:
+    LIGHT = '\u9617'
+    MEDIUM = '\u9618'
+    DARK = '\u9619'
 
 
 class TextArea(object):
@@ -90,10 +107,12 @@ class Label(object):
     """
     Widget that displays the given text.
     """
-    def __init__(self, loop, text, token=None):
+    def __init__(self, loop, text, token=None, width=None):
         assert isinstance(loop, EventLoop)
 
-        if '\n' in text:
+        if width is not None:
+            w = width
+        elif '\n' in text:
             width = D()
         else:
             width = D.exact(get_cwidth(text))
@@ -168,8 +187,8 @@ class Frame(object):
 
         fill = partial(Window, token=Token.Window.Border)
 
-        self.container = HSplit([
-            VSplit([
+        if title:
+            top_row = VSplit([
                 fill(width=1, height=1, char=BORDER.TOP_LEFT),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char='|'),
@@ -177,7 +196,16 @@ class Frame(object):
                 fill(width=1, height=1, char='|'),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char=BORDER.TOP_RIGHT),
-            ]),
+            ])
+        else:
+            top_row = VSplit([
+                fill(width=1, height=1, char=BORDER.TOP_LEFT),
+                fill(char=BORDER.HORIZONTAL),
+                fill(width=1, height=1, char=BORDER.TOP_RIGHT),
+            ])
+
+        self.container = HSplit([
+            top_row,
             VSplit([
                 fill(width=1, char=BORDER.VERTICAL),
                 body,
@@ -323,7 +351,7 @@ class RadioButtonList(object):
             content=self.control,
             token=Token.RadioList,
             right_margins=[
-                ScrollbarMargin(),
+                ScrollbarMargin(display_arrows=True),
             ])
 
     def _get_tokens(self, app):

@@ -164,7 +164,7 @@ def accept_no(app):
 Frame_ = partial(Frame, loop=loop)
 Button_ = partial(Button, loop=loop)
 Label_ = partial(Label, loop=loop)
-TextField_ = partial(TextArea, loop=loop)
+TextArea_ = partial(TextArea, loop=loop)
 Checkbox_ = partial(Checkbox, loop=loop)
 Box_ = partial(Box, loop=loop)
 ProgressBar_ = partial(ProgressBar, loop=loop)
@@ -172,8 +172,8 @@ ProgressBar_ = partial(ProgressBar, loop=loop)
 
 yes_button = Button('Yes', handler=accept_yes)
 no_button = Button('No', handler=accept_no)
-textfield = TextField_()
-textfield2 = TextField_(lexer=PygmentsLexer(HtmlLexer))
+textfield  = TextArea_(lexer=PygmentsLexer(HtmlLexer))
+textfield2 = TextArea_()
 checkbox1 = Checkbox_(text='Checkbox')
 checkbox2 = Checkbox_(text='Checkbox')
 
@@ -194,12 +194,12 @@ animal_completer = WordCompleter([
 
 root_container = HSplit([
     VSplit([
-#        Frame_(title='Test', body=Label('hello world\ntest')),
         Frame_(body=Label_(text='Left frame\ncontent')),
         InputDialog(
-            loop, 'The custom window', 'right frame\ncontent\ntest',
+            loop, 'The custom window', 'This is the\nwindow content',
             password=True, completer=animal_completer),
-        MessageDialog(loop, 'The custom window', 'right frame\ncontent\ntest')
+        MessageDialog(loop, 'The custom window',
+                      'this is\nthe other window.\nTest')
     ]),
     VSplit([
         Frame_(body=HSplit([
@@ -282,21 +282,20 @@ style = style_from_pygments(style_dict={
     Token.Menu: 'bg:#008888 #ffffff',
     Token.DialogTitle: 'bg:#444444 #ffffff',
     Token.DialogBody: 'bg:#888888',
-    Token.CursorLine: 'reverse',
-    Token.Focussed: 'reverse',
-    #Token.Shadow: '#ff0000 underline noinherit',
+#    Token.CursorLine: 'reverse',
+#    Token.Focussed: 'reverse',
     Token.Window.Border|Token.Shadow: 'bg:#ff0000',
     Token.Menu|Token.Shadow: 'bg:#ff0000',
     Token.Dialog: 'bg:#0000ff',
     Token.Dialog | Token.Shadow: 'bg:#000088',
 
-    Token.Focussed | Token.Button: 'bg:#ff0000 noinherit',
+    Token.Focussed | Token.Button: 'bg:#880000 #ffffff noinherit',
 
     Token.Dialog | Token.Dialog: 'bg:#ffffff #000000',
     Token.Dialog | Token.Frame.Label: '#ff0000 bold',
 
     Token.Dialog | Token.TextArea: 'bg:#aaaaaa underline',
-    Token.Dialog | Token.Button | Token.Focussed: 'bg:#ff0000',
+    Token.Dialog | Token.Button | Token.Focussed: 'bg:#880000 #ffffff',
 
     Token.ProgressBar: 'bg:#000088',
     Token.ProgressBar.Used: 'bg:#ff0000',
@@ -308,18 +307,16 @@ style = style_from_pygments(style_dict={
 
 application = Application(
     loop=loop,
-    layout=Layout(root_container, focussed_window=yes_button.__pt_container__()),
+    layout=Layout(
+        root_container,
+        focussed_window=yes_button.__pt_container__()
+    ),
     key_bindings=merge_key_bindings([
         load_key_bindings(),
         bindings,
     ]),
     style=style,
-
-    # Let's add mouse support!
     mouse_support=True,
-
-    # Using an alternate screen buffer means as much as: "run full screen".
-    # It switches the terminal to an alternate screen.
     use_alternate_screen=True)
 
 

@@ -54,13 +54,19 @@ class MenuContainer(object):
 
         @kb.add(Keys.Up)
         def _(event):
-            menu = self.menu_items[self.selected_menu]
-            menu.selected_item = (menu.selected_item - 1) % len(menu.children)
+            self._go_up()
 
         @kb.add(Keys.Down)
         def _(event):
+            self._go_down()
+
+        @kb.add(Keys.Enter)
+        def _(event):
+            " Click the selected menu item. "
             menu = self.menu_items[self.selected_menu]
-            menu.selected_item = (menu.selected_item + 1) % len(menu.children)
+            item = menu.children[menu.selected_item]
+            if item.handler:
+                item.handler()
 
         # Controls.
         self.control = TokenListControl(
@@ -93,13 +99,26 @@ class MenuContainer(object):
             ]
         )
 
+    def _go_up(self):
+        menu = self.menu_items[self.selected_menu]
+        menu.selected_item = (menu.selected_item - 1) % len(menu.children)
+
+    def _go_down(self):
+        menu = self.menu_items[self.selected_menu]
+        menu.selected_item = (menu.selected_item + 1) % len(menu.children)
+
     def _get_menu_tokens(self, app):
         result = []
+        focussed = (app.layout.current_window == self.window)
+
         for i, item in enumerate(self.menu_items):
             result.append((Token.MenuBar, ' '))
-            if i == self.selected_menu:
+            if i == self.selected_menu and focussed:
                 result.append((Token.SetMenuPosition, ''))
-            result.append((Token.Menu, item.text))
+                token = Token.MenuBar.SelectedItem
+            else:
+                token = Token.MenuBar
+            result.append((token, item.text))
         return result
 
     def _submenu(self):
@@ -114,7 +133,7 @@ class MenuContainer(object):
                 result.append((Token, ' {} '.format(item.text)))
 
                 if i != len(selected_menu.children) - 1:
-                    result.append((Token.Menu, '\n'))
+                    result.append((Token, '\n'))
             return result
 
         return ConditionalContainer(
@@ -129,11 +148,13 @@ class MenuContainer(object):
 
 
 class MenuItem(object):
-    def __init__(self, text='', handler=None, children=None, shortcut=None):
+    def __init__(self, text='', handler=None, children=None, shortcut=None,
+                 disabled=False):
         self.text = text
         self.handler = handler
         self.children = children
         self.shortcut = shortcut
+        self.disabled = disabled
         self.selected_item = 0
 
 
@@ -220,7 +241,7 @@ root_container = HSplit([
             no_button,
         ], align='CENTER', padding=1),
         padding=1,
-        token=Token.Menu,
+        token=Token.Buttonbar,
     ),
 ])
 
@@ -229,7 +250,7 @@ root_container = MenuContainer(root_container, menu_items=[
         MenuItem('Open'),
         MenuItem('Save'),
         MenuItem('Save as...'),
-        MenuItem('----'),
+        MenuItem('----', disabled=True),
         MenuItem('Exit'),
         ]),
     MenuItem('Edit', children=[
@@ -253,16 +274,17 @@ style = style_from_pygments(style_dict={
     Token.Label: '#888888 reverse',
     Token.Window.Border: '#888888',
 
-    Token.MenuBar: 'bg:#00ff00 #000000',
-    Token.Menu: 'bg:#008888 #ffffff',
-    Token.DialogTitle: 'bg:#444444 #ffffff',
-    Token.DialogBody: 'bg:#888888',
-    Token.Menu | Token.CursorLine: 'reverse',
-#    Token.Focussed: 'reverse',
+    Token.MenuBar: 'bg:#aaaaaa #888888',
+    Token.MenuBar.SelectedItem: 'bg:#ffffff #000000',
+    Token.Menu: 'bg:#888888 #ffffff',
+    Token.Menu | Token.CursorLine: 'reverse noinherit',
     Token.Window.Border|Token.Shadow: 'bg:#ff0000',
-    Token.Menu|Token.Shadow: 'bg:#ff0000',
+#    Token.Menu|Token.Shadow: 'bg:#ff0000',
+
     Token.Dialog: 'bg:#0000ff',
     Token.Dialog | Token.Shadow: 'bg:#000088',
+    Token.DialogTitle: 'bg:#444444 #ffffff',
+    Token.DialogBody: 'bg:#888888',
 
     Token.Focussed | Token.Button: 'bg:#880000 #ffffff noinherit',
 
@@ -277,6 +299,9 @@ style = style_from_pygments(style_dict={
 
     Token.RadioList | Token.Focussed: 'noreverse',
     Token.RadioList | Token.Focussed | Token.Radio.Selected: 'reverse',
+
+
+    Token.Buttonbar: 'bg:#aaaaff'
 })
 
 

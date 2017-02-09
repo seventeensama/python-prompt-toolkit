@@ -3,7 +3,7 @@ Wrapper for the layout.
 """
 from __future__ import unicode_literals
 from .controls import UIControl
-from .containers import Window, to_container
+from .containers import Window, to_container, to_window
 
 __all__ = (
     'Layout',
@@ -20,15 +20,13 @@ class Layout(object):
     :param focussed_window: The `Window` to be focused initially.
     """
     def __init__(self, container, focussed_window=None):
-        assert focussed_window is None or isinstance(focussed_window, Window)
-
         self.container = to_container(container)
         self._stack = []
 
         if focussed_window is None:
             self._stack.append(next(self.find_all_windows()))
         else:
-            self._stack.append(focussed_window)
+            self._stack.append(to_window(focussed_window))
 
     def __repr__(self):
         return 'Layout(%r, current_control=%r)' % (

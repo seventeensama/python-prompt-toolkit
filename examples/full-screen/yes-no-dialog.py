@@ -6,8 +6,12 @@ from __future__ import unicode_literals
 from functools import partial
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.document import Document
+from prompt_toolkit.eventloop.base import EventLoop
 from prompt_toolkit.eventloop.defaults import create_event_loop
+from prompt_toolkit.filters import Condition, has_focus
+from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
@@ -15,15 +19,12 @@ from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align, to_w
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl, UIControlKeyBindings
 from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.processors import PasswordProcessor
 from prompt_toolkit.layout.lexers import PygmentsLexer
+from prompt_toolkit.layout.processors import PasswordProcessor
 from prompt_toolkit.styles.from_pygments import style_from_pygments
 from prompt_toolkit.token import Token
-from prompt_toolkit.filters import Condition, has_focus
 from prompt_toolkit.utils import get_cwidth
-from prompt_toolkit.eventloop.base import EventLoop
 from pygments.lexers import HtmlLexer
-from prompt_toolkit.contrib.completers import WordCompleter
 
 loop = create_event_loop()
 
@@ -242,35 +243,9 @@ root_container = MenuContainer(root_container, menu_items=[
 ])
 
 # Global key bindings.
-
 bindings = KeyBindings()
-
-@bindings.add(Keys.Tab)
-def _(event):
-    windows = event.app.focussable_windows
-    if len(windows) > 0:
-        try:
-            index = windows.index(event.app.layout.current_window)
-        except ValueError:
-            index = 0
-        else:
-            index = (index + 1) % len(windows)
-
-        event.app.layout.focus(windows[index])
-
-
-@bindings.add(Keys.BackTab)
-def _(event):
-    windows = event.app.focussable_windows
-    if len(windows) > 0:
-        try:
-            index = windows.index(event.app.layout.current_window)
-        except ValueError:
-            index = 0
-        else:
-            index = (index - 1) % len(windows)
-
-        event.app.layout.focus(windows[index])
+bindings.add(Keys.Tab)(focus_next)
+bindings.add(Keys.BackTab)(focus_previous)
 
 
 style = style_from_pygments(style_dict={
@@ -282,7 +257,7 @@ style = style_from_pygments(style_dict={
     Token.Menu: 'bg:#008888 #ffffff',
     Token.DialogTitle: 'bg:#444444 #ffffff',
     Token.DialogBody: 'bg:#888888',
-#    Token.CursorLine: 'reverse',
+    Token.Menu | Token.CursorLine: 'reverse',
 #    Token.Focussed: 'reverse',
     Token.Window.Border|Token.Shadow: 'bg:#ff0000',
     Token.Menu|Token.Shadow: 'bg:#ff0000',
@@ -309,7 +284,7 @@ application = Application(
     loop=loop,
     layout=Layout(
         root_container,
-        focussed_window=yes_button.__pt_container__()
+        focussed_window=yes_button,
     ),
     key_bindings=merge_key_bindings([
         load_key_bindings(),

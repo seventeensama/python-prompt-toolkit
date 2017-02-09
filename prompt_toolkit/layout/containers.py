@@ -32,6 +32,7 @@ __all__ = (
     'ScrollOffsets',
     'ColorColumn',
     'to_container',
+    'to_window',
 )
 
 Transparent = Token.Transparent

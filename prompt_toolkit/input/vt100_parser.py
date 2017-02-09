@@ -165,6 +165,10 @@ ANSI_SEQUENCES = {
     '\x1bOc': Keys.ControlRight, # rxvt
     '\x1bOd': Keys.ControlLeft,  # rxvt
 
+    # Tmux (Win32 subsystem) sends the following scroll events.
+    '\x1b[62~': Keys.ScrollUp,
+    '\x1b[63~': Keys.ScrollDown,
+
     '\x1b[200~': Keys.BracketedPaste,  # Start of bracketed paste.
 
     # Meta + arrow keys. Several terminals handle this differently.

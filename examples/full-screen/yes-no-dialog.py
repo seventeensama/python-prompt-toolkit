@@ -15,177 +15,20 @@ from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align, to_w
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl, UIControlKeyBindings
 from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.processors import PasswordProcessor
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.styles.from_pygments import style_from_pygments
 from prompt_toolkit.token import Token
-from prompt_toolkit.filters import Condition
+from prompt_toolkit.filters import Condition, has_focus
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.eventloop.base import EventLoop
 from pygments.lexers import HtmlLexer
+from prompt_toolkit.contrib.completers import WordCompleter
 
 loop = create_event_loop()
 
-
-class BORDER:
-    " Box drawing characters. "
-    HORIZONTAL = '\u2501'
-    VERTICAL = '\u2503'
-    TOP_LEFT = '\u250f'
-    TOP_RIGHT = '\u2513'
-    BOTTOM_LEFT = '\u2517'
-    BOTTOM_RIGHT = '\u251b'
-    LIGHT_VERTICAL = '\u2502'
-
-
-class TextArea(object):
-    def __init__(self, loop, text=''):
-        assert isinstance(loop, EventLoop)
-
-        self.buffer = Buffer(loop=loop)
-
-        self.window = Window(
-            content=BufferControl(buffer=self.buffer, lexer=PygmentsLexer(HtmlLexer)),
-            token=Token.TextArea,
-            #align=Align.CENTER,
-            wrap_lines=True)
-
-    def __pt_container__(self):
-        return self.window
-
-
-class Label(object):
-    """
-    Widget that displays the given text.
-    """
-    def __init__(self, loop, text, token=None):
-        assert isinstance(loop, EventLoop)
-
-        if '\n' in text:
-            width = D()
-        else:
-            width = D.exact(get_cwidth(text))
-
-        self.buffer = Buffer(loop=loop, document=Document(text, 0))
-        self.buffer_control = BufferControl(self.buffer)
-        self.window = Window(content=self.buffer_control, token=token, width=width)
-
-    def __pt_container__(self):
-        return self.window
-
-
-class Frame(object):
-    """
-    Draw a border around a container.
-    """
-    def __init__(self, loop, body, title='', token=None):
-        assert isinstance(loop, EventLoop)
-
-        fill = partial(Window, token=Token.Window.Border)
-
-        self.container = HSplit([
-            VSplit([
-                fill(width=1, height=1, char=BORDER.TOP_LEFT),
-                fill(char=BORDER.HORIZONTAL),
-                fill(width=1, height=1, char='|'),
-                Label(loop, ' {} '.format(title), token=Token.Frame.Label),
-                fill(width=1, height=1, char='|'),
-                fill(char=BORDER.HORIZONTAL),
-                fill(width=1, height=1, char=BORDER.TOP_RIGHT),
-            ]),
-            VSplit([
-                fill(width=1, char=BORDER.VERTICAL),
-                body,
-                fill(width=1, char=BORDER.VERTICAL),
-            ]),
-            VSplit([
-                fill(width=1, height=1, char=BORDER.BOTTOM_LEFT),
-                fill(char=BORDER.HORIZONTAL),
-                fill(width=1, height=1, char=BORDER.BOTTOM_RIGHT),
-            ]),
-        ], token=token)
-
-    def __pt_container__(self):
-        return self.container
-
-
-class Shadow(object):
-    def __init__(self, loop, body):
-        self.container = FloatContainer(
-            content=body,
-            floats=[
-                Float(bottom=-1, height=1, left=1, right=-1,
-                    content=Window(token=Token.Shadow)),
-                Float(bottom=-1, top=1, width=1, right=-1,
-                    content=Window(token=Token.Shadow)),
-                ]
-            )
-
-    def __pt_container__(self):
-        return self.container
-
-
-class Box(object):
-    """
-    Add padding around a container.
-    """
-    def __init__(self, loop, body, padding=0,
-                 padding_left=None, padding_right=None,
-                 padding_top=None, padding_bottom=None,
-                 token=None, char=None):
-        def get(value):
-            return value if value is not None else padding
-
-        self.padding_left = get(padding_left)
-        self.padding_right = get(padding_right)
-        self.padding_top = get(padding_top)
-        self.padding_bottom = get(padding_bottom)
-        self.body = body
-
-        self.container = HSplit([
-            Window(height=D(min=self.padding_top), char=char),
-            VSplit([
-                Window(width=D(min=self.padding_left), char=char),
-                body,
-                Window(width=D(min=self.padding_right), char=char),
-            ]),
-            Window(height=D(min=self.padding_bottom), char=char),
-        ], token=token)
-
-    def __pt_container__(self):
-        return self.container
-
-
-class CheckBox(object):
-    def __init__(self, loop, text):
-        self.checked = True
-
-        kb = KeyBindings()
-
-        @kb.add(' ')
-        @kb.add(Keys.Enter)
-        @kb.add('p')
-        def _(event):
-            self.checked = not self.checked
-
-        self.control = TokenListControl(
-            self._get_checkbox_tokens,
-            get_key_bindings=lambda app: UIControlKeyBindings(kb, modal=False))
-
-        self.window = Window(width=3, content=self.control)
-
-        self.container = VSplit([
-            self.window,
-            Label(loop=loop, text=text)
-        ])
-
-    def _get_checkbox_tokens(self, app):
-        text = 'x' if self.checked else ' '
-        return [
-            (Token, '[%s]' % text)
-        ]
-
-    def __pt_container__(self):
-        return self.container
+from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, Shadow, InputDialog, MessageDialog, Button, RadioButtonList
 
 
 class MenuContainer(object):
@@ -221,7 +64,8 @@ class MenuContainer(object):
         # Controls.
         self.control = TokenListControl(
             self._get_menu_tokens,
-            get_key_bindings=lambda app: UIControlKeyBindings(kb, modal=False))
+            key_bindings=kb,
+            focussable=True)
 
         self.window = Window(
             height=1,
@@ -237,9 +81,14 @@ class MenuContainer(object):
                 body,
             ]),
             floats=[
-                Float(xcursor=True, ycursor=True,#top=1, left=1,
+                Float(xcursor=self.window, ycursor=self.window,#top=1, left=1,
                     content=self._submenu(), transparant=False),
-#                Float(content=dialog()),
+                Float(xcursor=True,
+                      ycursor=True,
+                      content=CompletionsMenu(
+                          max_height=16,
+                          scroll_offset=1)
+                ),
             ]
         )
 
@@ -287,78 +136,22 @@ class MenuItem(object):
         self.selected_item = 0
 
 
-class Button(object):
-    def __init__(self, text, action=None, width=12):
-        assert action is None or callable(action)
-        assert isinstance(width, int)
-
-        self.text = text
-        self.action = action
-        self.width = width
-        self.control = TokenListControl(
-            self._get_tokens,
-            get_key_bindings=self._get_key_bindings)
-
-        self.window = Window(
-            self.control,
-            align=Align.CENTER,
-            height=1,
-            width=width,
-            token=Token.Button,
-            dont_extend_width=True,
-            dont_extend_height=True)
-
-    def _get_tokens(self, app):
-        token = Token.Button
-        text = ('{:^%s}' % (self.width - 2)).format(self.text)
-
-        return [
-            (token.Arrow, '<'),
-            (token.Text, text),
-            (token.Arrow, '>'),
-        ]
-
-    def _get_key_bindings(self, app):
-        kb = KeyBindings()
-        @kb.add(' ')
-        @kb.add(Keys.Enter)
-        def _(event):
-            if self.action is not None:
-                self.action(app)
-
-        return UIControlKeyBindings(kb, modal=False)
+class ProgressBar(object):
+    def __init__(self, loop):
+        self.container = FloatContainer(
+            content=VSplit([
+                Window(token=Token.ProgressBar.Used, height=1, width=D(weight=60)),
+                Window(token=Token.ProgressBar, height=1, width=D(weight=40)),
+            ]),
+            floats=[
+                Float(content=Label(loop, '60%'), top=0, bottom=0),
+            ])
 
     def __pt_container__(self):
-        return self.window
+        return self.container
 
-
-class VerticalLine(object):
-    def __init__(self):
-        self.window = Window(
-            char=BORDER.VERTICAL,
-            token=Token.Line,
-            width=1)
-
-    def __pt_container__(self):
-        return self.window
-
-
-class HorizontalLine(object):
-    def __init__(self):
-        self.window = Window(
-            char=BORDER.HORIZONTAL,
-            token=Token.Line,
-            height=1)
-
-    def __pt_container__(self):
-        return self.window
 
 # >>>
-
-
-def create_pane():
-    return Window()
-
 
 def accept_yes(app):
     app.set_return_value(True)
@@ -372,49 +165,53 @@ Frame_ = partial(Frame, loop=loop)
 Button_ = partial(Button, loop=loop)
 Label_ = partial(Label, loop=loop)
 TextField_ = partial(TextArea, loop=loop)
-CheckBox_ = partial(CheckBox, loop=loop)
+Checkbox_ = partial(Checkbox, loop=loop)
 Box_ = partial(Box, loop=loop)
+ProgressBar_ = partial(ProgressBar, loop=loop)
 
 
-yes_button = Button('Yes', action=accept_yes)
-no_button = Button('No', action=accept_no)
+yes_button = Button('Yes', handler=accept_yes)
+no_button = Button('No', handler=accept_no)
 textfield = TextField_()
-textfield2 = TextField_()
-checkbox1 = CheckBox_(text='Checkbox')
-checkbox2 = CheckBox_(text='Checkbox')
+textfield2 = TextField_(lexer=PygmentsLexer(HtmlLexer))
+checkbox1 = Checkbox_(text='Checkbox')
+checkbox2 = Checkbox_(text='Checkbox')
+
+radios = RadioButtonList(loop=loop, values=[
+    ('Red', 'red'),
+    ('Green', 'green'),
+    ('Blue', 'blue'),
+    ('Orange', 'orange'),
+    ('Yellow', 'yellow'),
+    ('Purple', 'Purple'),
+    ('Brown', 'Brown'),
+])
+
+animal_completer = WordCompleter([
+    'alligator', 'ant', 'ape', 'bat', 'bear', 'beaver', 'bee', 'bison', 'butterfly', 'cat', 'chicken', 'crocodile', 'dinosaur', 'dog', 'dolphin', 'dove', 'duck', 'eagle', 'elephant', 'fish', 'goat', 'gorilla', 'kangaroo', 'leopard', 'lion', 'mouse', 'rabbit', 'rat', 'snake', 'spider', 'turkey', 'turtle', ], ignore_case=True)
+
+
 
 root_container = HSplit([
     VSplit([
 #        Frame_(title='Test', body=Label('hello world\ntest')),
         Frame_(body=Label_(text='Left frame\ncontent')),
-        Box_(
-            body=Shadow(loop,
-                Frame_(
-                    title='The custom window',
-                    body=HSplit([
-                        Label_(text='right frame\ncontent'),
-                        Box_(
-                            body=VSplit([
-                                Button('Yes'),
-                                Button('No'),
-                            ], padding=1),
-                        )
-                    ]),
-                    token=Token.Dialog)),
-            padding=3,
-            token=Token.RightTopPane,
-        )
+        InputDialog(
+            loop, 'The custom window', 'right frame\ncontent\ntest',
+            password=True, completer=animal_completer),
+        MessageDialog(loop, 'The custom window', 'right frame\ncontent\ntest')
     ]),
     VSplit([
-        Frame_(body=textfield),
-        #VerticalLine(),
-        Frame_(body=VSplit([
-            HSplit([
-                checkbox1,
-                checkbox2,
-            ], align='TOP'),
+        Frame_(body=HSplit([
+            textfield,
+            ProgressBar_(),
         ])),
-        Frame_(body=textfield2),
+        #VerticalLine(),
+        Frame_(body=HSplit([
+            checkbox1,
+            checkbox2,
+        ], align='TOP')),
+        Frame_(body=radios),
     ], padding=1),
     Box_(
         body=VSplit([
@@ -448,22 +245,32 @@ root_container = MenuContainer(root_container, menu_items=[
 
 bindings = KeyBindings()
 
-widgets = [to_window(w) for w in
-    (yes_button, no_button, textfield, textfield2)
-] + [checkbox1.window, checkbox2.window, root_container.window]
-
-
 @bindings.add(Keys.Tab)
 def _(event):
-    index = widgets.index(event.app.layout.current_window)
-    index = (index + 1) % len(widgets)
-    event.app.layout.focus(widgets[index])
+    windows = event.app.focussable_windows
+    if len(windows) > 0:
+        try:
+            index = windows.index(event.app.layout.current_window)
+        except ValueError:
+            index = 0
+        else:
+            index = (index + 1) % len(windows)
+
+        event.app.layout.focus(windows[index])
+
 
 @bindings.add(Keys.BackTab)
 def _(event):
-    index = widgets.index(event.app.layout.current_window)
-    index = (index - 1) % len(widgets)
-    event.app.layout.focus(widgets[index])
+    windows = event.app.focussable_windows
+    if len(windows) > 0:
+        try:
+            index = windows.index(event.app.layout.current_window)
+        except ValueError:
+            index = 0
+        else:
+            index = (index - 1) % len(windows)
+
+        event.app.layout.focus(windows[index])
 
 
 style = style_from_pygments(style_dict={
@@ -478,17 +285,24 @@ style = style_from_pygments(style_dict={
     Token.CursorLine: 'reverse',
     Token.Focussed: 'reverse',
     #Token.Shadow: '#ff0000 underline noinherit',
-   # Token.Menu| 
-    #Token.Window.Border|
     Token.Window.Border|Token.Shadow: 'bg:#ff0000',
     Token.Menu|Token.Shadow: 'bg:#ff0000',
-    Token.RightTopPane: 'bg:#0000ff',
-    Token.RightTopPane | Token.Shadow: 'bg:#000088',
+    Token.Dialog: 'bg:#0000ff',
+    Token.Dialog | Token.Shadow: 'bg:#000088',
 
     Token.Focussed | Token.Button: 'bg:#ff0000 noinherit',
 
-    Token.RightTopPane | Token.Dialog: 'bg:#ffffff #000000',
-    Token.RightTopPane | Token.Frame.Label: '#ff0000 bold',
+    Token.Dialog | Token.Dialog: 'bg:#ffffff #000000',
+    Token.Dialog | Token.Frame.Label: '#ff0000 bold',
+
+    Token.Dialog | Token.TextArea: 'bg:#aaaaaa underline',
+    Token.Dialog | Token.Button | Token.Focussed: 'bg:#ff0000',
+
+    Token.ProgressBar: 'bg:#000088',
+    Token.ProgressBar.Used: 'bg:#ff0000',
+
+    Token.RadioList | Token.Focussed: 'noreverse',
+    Token.RadioList | Token.Focussed | Token.Radio.Selected: 'reverse',
 })
 
 

@@ -105,7 +105,7 @@ class Screen(object):
         self.zero_width_escapes = defaultdict(lambda: defaultdict(lambda: ''))
 
         #: Position of the cursor.
-        self.cursor_position = Point(y=0, x=0)
+        self.cursor_positions = {}  # Map `Window` objects to `Point` objects.
 
         #: Visibility of the cursor.
         self.show_cursor = True
@@ -114,12 +114,50 @@ class Screen(object):
         #: (We can't use the cursor position, because we don't want the
         #: completion menu to change its position when we browse through all the
         #: completions.)
-        self.menu_position = None
+        self.menu_positions = {}  # Map `Window` objects to `Point` objects.
 
         #: Currently used width/height of the screen. This will increase when
         #: data is written to the screen.
         self.width = initial_width or 0
         self.height = initial_height or 0
+
+        # Windows that have been drawn. (Each `Window` class will add itself to
+        # this list.)
+        self.visible_windows = []
+
+    @property
+    def cursor_position(self):  raise ''# XXX: remove
+
+    def set_cursor_position(self, window, position):
+        " Set the cursor position for a given window. "
+        self.cursor_positions[window] = position
+
+    def set_menu_position(self, window, position):
+        " Set the cursor position for a given window. "
+        self.menu_positions[window] = position
+
+    def get_cursor_position(self, window):
+        """
+        Get the cursor position for a given window.
+        Returns a `Point`.
+        """
+        try:
+            return self.cursor_positions[window]
+        except KeyError:
+            return Point(0, 0)
+
+    def get_menu_position(self, window):
+        """
+        Get the menu position for a given window.
+        (This falls back to the cursor position if no menu position was set.)
+        """
+        try:
+            return self.menu_positions[window]
+        except KeyError:
+            try:
+                return self.cursor_positions[window]
+            except KeyError:
+                return Point(0, 0)
 
     def replace_all_tokens(self, token):
         """

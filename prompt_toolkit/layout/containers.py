@@ -475,9 +475,9 @@ class FloatContainer(Container):
             # relative to the write_position.)
             # Note: This should be inside the for-loop, because one float could
             #       set the cursor position to be used for the next one.
-            cursor_position = screen.menu_position or screen.cursor_position
-            cursor_position = Point(x=cursor_position.x - write_position.xpos,
-                                    y=cursor_position.y - write_position.ypos)
+            cpos = screen.get_menu_position(app.layout.current_window)
+            cursor_position = Point(x=cpos.x - write_position.xpos,
+                                    y=cpos.y - write_position.ypos)
 
             fl_width = fl.get_width(app)
             fl_height = fl.get_height(app)
@@ -637,7 +637,7 @@ class Float(object):
     """
     def __init__(self, top=None, right=None, bottom=None, left=None,
                  width=None, height=None, get_width=None, get_height=None,
-                 xcursor=False, ycursor=False, content=None,
+                 xcursor=None, ycursor=None, content=None,
                  hide_when_covering_content=False, transparant=True):
         assert width is None or get_width is None
         assert height is None or get_height is None
@@ -1307,6 +1307,9 @@ class Window(Container):
         # Apply 'self.token'
         self._apply_token(app, screen, write_position)
 
+        # Tell the screen that this user control has been painted.
+        screen.visible_windows.append(self)
+
     def _copy_body(self, app, ui_content, new_screen, write_position, move_x,
                    width, vertical_scroll=0, horizontal_scroll=0,
                    wrap_lines=False, highlight_lines=False,
@@ -1431,7 +1434,7 @@ class Window(Container):
                     ui_content.cursor_position.y, ui_content.cursor_position.x)
 
             if has_focus:
-                new_screen.cursor_position = screen_cursor_position
+                new_screen.set_cursor_position(self, screen_cursor_position)
 
                 if always_hide_cursor:
                     new_screen.show_cursor = False
@@ -1450,9 +1453,9 @@ class Window(Container):
             self._show_key_processor_key_buffer(app, new_screen)
 
         # Set menu position.
-        if not new_screen.menu_position and ui_content.menu_position:
-            new_screen.menu_position = cursor_pos_to_screen_pos(
-                    ui_content.menu_position.y, ui_content.menu_position.x)
+        if ui_content.menu_position:
+            new_screen.set_menu_position(self, cursor_pos_to_screen_pos(
+                    ui_content.menu_position.y, ui_content.menu_position.x))
 
         # Update output screne height.
         new_screen.height = max(new_screen.height, ypos + write_position.height)
@@ -1808,7 +1811,8 @@ def to_container(container):
     elif hasattr(container, '__pt_container__'):
         return to_container(container.__pt_container__())
     else:
-        raise ValueError
+        raise ValueError('Not a container object.')
+
 
 def to_window(container):
     """
@@ -1819,4 +1823,4 @@ def to_window(container):
     elif hasattr(container, '__pt_container__'):
         return to_window(container.__pt_container__())
     else:
-        raise ValueError
+        raise ValueError('Not a Window object: %r.' % (container, ))

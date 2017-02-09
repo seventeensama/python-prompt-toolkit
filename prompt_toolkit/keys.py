@@ -67,6 +67,9 @@ class Keys(object):
     ShiftDown   = Key('<ShiftDown>')
     ShiftRight  = Key('<ShiftRight>')
 
+    ScrollUp    = Key('<ScrollUp>')
+    ScrollDown  = Key('<ScrollDown>')
+
     Home        = Key('<Home>')
     End         = Key('<End>')
     Delete      = Key('<Delete>')

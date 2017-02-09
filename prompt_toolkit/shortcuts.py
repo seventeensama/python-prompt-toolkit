@@ -34,7 +34,7 @@ from .document import Document
 from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from .eventloop.base import EventLoop
 from .eventloop.defaults import create_event_loop #, create_asyncio_event_loop
-from .filters import IsDone, HasFocus, RendererHeightIsKnown, to_simple_filter, Condition
+from .filters import is_done, has_focus, RendererHeightIsKnown, to_simple_filter, Condition
 from .history import InMemoryHistory, DynamicHistory
 from .input.defaults import create_input
 from .application import Application
@@ -342,9 +342,9 @@ class Prompt(object):
                 # still allows to jump to the next match in
                 # navigation mode.)
                 HighlightSearchProcessor(preview_search=True),
-                HasFocus(search_buffer)),
+                has_focus(search_buffer)),
             HighlightSelectionProcessor(),
-            ConditionalProcessor(AppendAutoSuggestion(), HasFocus(default_buffer) & ~IsDone()),
+            ConditionalProcessor(AppendAutoSuggestion(), has_focus(default_buffer) & ~is_done),
             ConditionalProcessor(PasswordProcessor(), dyncond('is_password')),
             DisplayMultipleCursors(),
 
@@ -365,7 +365,7 @@ class Prompt(object):
             Window(TokenListControl(lambda app: self.get_bottom_toolbar_tokens(app)),
                                     token=Token.Toolbar,
                                     height=Dimension.exact(1)),
-            filter=~IsDone() & RendererHeightIsKnown() &
+            filter=~is_done & RendererHeightIsKnown() &
                     Condition(lambda app: self.get_bottom_toolbar_tokens is not None))
 
         search_toolbar = SearchToolbar(search_buffer)
@@ -432,14 +432,14 @@ class Prompt(object):
                           content=CompletionsMenu(
                               max_height=16,
                               scroll_offset=1,
-                              extra_filter=HasFocus(default_buffer) &
+                              extra_filter=has_focus(default_buffer) &
                                   ~dyncond('display_completions_in_columns'),
                     )),
                     Float(xcursor=True,
                           ycursor=True,
                           content=MultiColumnCompletionsMenu(
                               show_meta=True,
-                              extra_filter=HasFocus(default_buffer) &
+                              extra_filter=has_focus(default_buffer) &
                                   dyncond('display_completions_in_columns'),
                     )),
                     # The right prompt.

@@ -231,6 +231,24 @@ class Application(object):
             return SearchState()  # Dummy search state.  (Don't return None!)
 
     @property
+    def visible_windows(self):
+        """
+        Return a list of `Window` objects that represent visible user controls.
+        """
+        last_screen = self.renderer.last_rendered_screen
+        if last_screen is not None:
+            return last_screen.visible_windows
+        else:
+            return []
+
+    @property
+    def focussable_windows(self):
+        """
+        Return a list of `Window` objects that are focussable.
+        """
+        return [w for w in self.visible_windows if w.content.is_focussable(self)]
+
+    @property
     def terminal_title(self):
         """
         Return the current title to be displayed in the terminal.
@@ -915,7 +933,7 @@ class _CombinedRegistry(KeyBindingsBase):
 
             return merge_key_bindings([
                 ConditionalKeyBindings(others_key_bindings, is_not_modal),
-                ui_key_bindings.key_bindings,
+                ui_key_bindings.key_bindings or KeyBindings(),
             ])
 
     @property

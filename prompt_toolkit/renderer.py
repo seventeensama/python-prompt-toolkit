@@ -20,7 +20,7 @@ __all__ = (
 )
 
 
-def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_token=None,
+def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, last_token=None,
                         is_done=False, attrs_for_token=None, size=None, previous_width=0):  # XXX: drop is_done
     """
     Render the diff between this screen and the previous screen.
@@ -185,7 +185,8 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
         current_pos = move_cursor(Point(y=current_height, x=0))
         output.erase_down()
     else:
-        current_pos = move_cursor(screen.cursor_position)
+        current_pos = move_cursor(
+            screen.get_cursor_position(app.layout.current_window))
 
     if is_done:
         output.enable_autowrap()
@@ -302,6 +303,14 @@ class Renderer(object):
 
         # Flush output. `disable_mouse_support` needs to write to stdout.
         self.output.flush()
+
+    @property
+    def last_rendered_screen(self):
+        """
+        The `Screen` class that was generated during the last rendering.
+        This can be `None`.
+        """
+        return self._last_screen
 
     @property
     def height_is_known(self):
@@ -435,7 +444,7 @@ class Renderer(object):
 
         # Process diff and write to output.
         self._cursor_pos, self._last_token = _output_screen_diff(
-            output, screen, self._cursor_pos,
+            app, output, screen, self._cursor_pos,
             self._last_screen, self._last_token, is_done,
             attrs_for_token=self._attrs_for_token,
             size=size,

@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.enums import DEFAULT_BUFFER
-from prompt_toolkit.filters import has_selection, Condition, emacs_insert_mode, vi_insert_mode, in_paste_mode
+from prompt_toolkit.filters import has_selection, Condition, emacs_insert_mode, vi_insert_mode, in_paste_mode, is_multiline
 from prompt_toolkit.key_binding.key_processor import KeyPress
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.screen import Point
@@ -11,6 +11,7 @@ from prompt_toolkit.renderer import HeightIsUnknownError
 from prompt_toolkit.utils import suspend_to_background_supported, is_windows
 
 from .named_commands import get_by_name
+from .scroll import scroll_one_line_down, scroll_one_line_up
 from ..key_bindings import KeyBindings
 
 
@@ -152,7 +153,7 @@ def load_basic_bindings():
     text_before_cursor = Condition(lambda app: app.current_buffer.text)
     handle(Keys.ControlD, filter=text_before_cursor & insert_mode)(get_by_name('delete-char'))
 
-    @handle(Keys.Enter, filter=insert_mode)
+    @handle(Keys.Enter, filter=insert_mode & is_multiline)
     def _(event):
         " Newline (in case of multiline input. "
         event.current_buffer.newline(copy_margin=not in_paste_mode(event.app))
@@ -245,7 +246,7 @@ def load_mouse_bindings():
         """
         Handling of incoming mouse event.
         """
-        # Typical:   "Esc[MaB*"
+        # TypicaL:   "eSC[MaB*"
         # Urxvt:     "Esc[96;14;13M"
         # Xterm SGR: "Esc[<64;85;12M"
 
@@ -313,6 +314,26 @@ def load_mouse_bindings():
             handler = event.app.renderer.mouse_handlers.mouse_handlers[x,y]
             handler(event.app, MouseEvent(position=Point(x=x, y=y),
                                           event_type=mouse_event))
+
+    @key_bindings.add(Keys.ScrollUp)
+    def _(event):
+        " Scroll up event without cursor position. "
+#        from prompt_toolkit.layout.controls import BufferControl
+#        if isinstance(event.app.layout.current_control, BufferControl):
+#            scroll_one_line_up(event)
+#        else:
+#            event.key_processor.feed(KeyPress(Keys.Up))
+        event.key_processor.feed(KeyPress(Keys.Up))
+
+    @key_bindings.add(Keys.ScrollDown)
+    def _(event):
+        " Scroll down event without cursor position. "
+#        from prompt_toolkit.layout.controls import BufferControl
+#        if isinstance(event.app.layout.current_control, BufferControl):
+#            scroll_one_line_down(event)
+#        else:
+#            event.key_processor.feed(KeyPress(Keys.Down))
+        event.key_processor.feed(KeyPress(Keys.Down))
 
     @key_bindings.add(Keys.WindowsMouseEvent)
     def _(event):

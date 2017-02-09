@@ -51,6 +51,12 @@ class UIControl(with_metaclass(ABCMeta, object)):
     def preferred_height(self, app, width, max_available_height, wrap_lines):
         return None
 
+    def is_focussable(self, app):
+        """
+        Tell whether this user control is focussable.
+        """
+        return False
+
     @abstractmethod
     def create_content(self, app, width, height):
         """
@@ -202,17 +208,29 @@ class TokenListControl(UIControl):
         either handle the event or return `NotImplemented` in case we want the
         containing Window to handle this event.
 
+    :param focussable: `bool` or `AppFilter`: Tell whether this control is focussable.
+
     :param get_tokens: Callable that takes an `Application` instance and
         returns the list of (Token, text) tuples to be displayed right now.
-    :param get_key_bindings:
+    :param key_bindings: a `KeyBindings` object.
+    :param global_key_bindings: a `KeyBindings` object that contains always on
+        key bindings.
     """
-    def __init__(self, get_tokens, get_key_bindings=None):
+    def __init__(self, get_tokens, focussable=False, key_bindings=None,
+                 global_key_bindings=None, modal=False):
+        from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
         assert callable(get_tokens)
-        assert get_key_bindings is None or callable(get_key_bindings)
+        assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
+        assert global_key_bindings is None or isinstance(global_key_bindings, KeyBindingsBase)
+        assert isinstance(modal, bool)
 
         self.get_tokens = get_tokens
+        self.focussable = to_app_filter(focussable)
 
-        self._get_key_bindings = get_key_bindings
+        # Key bindings.
+        self.key_bindings = key_bindings
+        self.global_key_bindings = global_key_bindings
+        self.modal = modal
 
         #: Cache for the content.
         self._content_cache = SimpleCache(maxsize=18)
@@ -224,6 +242,9 @@ class TokenListControl(UIControl):
 
     def reset(self):
         self._tokens = None
+
+    def is_focussable(self, app):
+        return self.focussable(app)
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
@@ -336,8 +357,10 @@ class TokenListControl(UIControl):
         return NotImplemented
 
     def get_key_bindings(self, app):
-        if self._get_key_bindings:
-            return self._get_key_bindings(app)
+        return UIControlKeyBindings(
+            key_bindings=self.key_bindings,
+            global_key_bindings=self.global_key_bindings,
+            modal=self.modal)
 
 
 class DummyControl(UIControl):
@@ -355,6 +378,9 @@ class DummyControl(UIControl):
             get_line=get_line,
             line_count=100 ** 100)  # Something very big.
 
+    def is_focussable(self, app):
+        return False
+
 
 _ProcessedLine = namedtuple('_ProcessedLine', 'tokens source_to_display display_to_source')
 
@@ -369,6 +395,7 @@ class BufferControl(UIControl):
         to apply multiple processors.)
     :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` instance for syntax highlighting.
     :param preview_search: `bool` or `AppFilter`: Show search while typing.
+    :param focussable: `bool` or `AppFilter`: Tell whether this control is focussable.
     :param get_search_state: Callable that returns the SearchState to be used.
     :param focus_on_click: Focus this buffer when it's click, but not yet focussed.
     """
@@ -377,6 +404,7 @@ class BufferControl(UIControl):
                  input_processor=None,
                  lexer=None,
                  preview_search=False,
+                 focussable=True,
                  search_buffer_control=None,
                  get_search_buffer_control=None,
                  get_search_state=None,
@@ -406,6 +434,7 @@ class BufferControl(UIControl):
             ])
 
         self.preview_search = to_app_filter(preview_search)
+        self.focussable = to_app_filter(focussable)
         self.get_search_state = get_search_state
         self.focus_on_click = to_app_filter(focus_on_click)
 
@@ -442,6 +471,9 @@ class BufferControl(UIControl):
     @property
     def search_state(self):
         return self.get_search_state()
+
+    def is_focussable(self, app):
+        return self.focussable(app)
 
     def preferred_width(self, app, max_available_width):
         """

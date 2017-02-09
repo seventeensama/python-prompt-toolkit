@@ -36,7 +36,7 @@ animal_completer = WordCompleter([
     'fish',
     'goat',
     'gorilla',
-    'kangoroo',
+    'kangaroo',
     'leopard',
     'lion',
     'mouse',

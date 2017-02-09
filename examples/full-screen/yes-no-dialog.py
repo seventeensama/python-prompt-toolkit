@@ -270,6 +270,7 @@ bindings.add(Keys.BackTab)(focus_previous)
 
 
 style = style_from_pygments(style_dict={
+    Token.Button: '',
     Token.Button.Arrow: 'bold',
     Token.Label: '#888888 reverse',
     Token.Window.Border: '#888888',
@@ -281,18 +282,18 @@ style = style_from_pygments(style_dict={
     Token.Window.Border|Token.Shadow: 'bg:#ff0000',
 #    Token.Menu|Token.Shadow: 'bg:#ff0000',
 
-    Token.Dialog: 'bg:#0000ff',
+    Token.Dialog: 'bg:#4444ff',
     Token.Dialog | Token.Shadow: 'bg:#000088',
-    Token.DialogTitle: 'bg:#444444 #ffffff',
-    Token.DialogBody: 'bg:#888888',
+#    Token.DialogTitle: 'bg:#444444 #ffffff',
+    Token.Dialog.Body: 'bg:#ffffff #000000',
 
     Token.Focussed | Token.Button: 'bg:#880000 #ffffff noinherit',
 
-    Token.Dialog | Token.Dialog: 'bg:#ffffff #000000',
+#    Token.Dialog | Token.Dialog: 'bg:#ffffff #000000',
     Token.Dialog | Token.Frame.Label: '#ff0000 bold',
 
-    Token.Dialog | Token.TextArea: 'bg:#aaaaaa underline',
-    Token.Dialog | Token.Button | Token.Focussed: 'bg:#880000 #ffffff',
+    Token.Dialog.Body | Token.TextArea: 'bg:#cccccc underline',
+    Token.Dialog.Body | Token.Button | Token.Focussed: 'bg:#880000 #ffffff',
 
     Token.ProgressBar: 'bg:#000088',
     Token.ProgressBar.Used: 'bg:#ff0000',

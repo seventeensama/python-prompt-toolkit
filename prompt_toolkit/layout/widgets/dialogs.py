@@ -31,7 +31,7 @@ class Dialog(object):
                             body=VSplit(buttons, padding=1),
                         )
                     ]),
-                    token=Token.Dialog)),
+                    token=Token.Dialog.Body)),
             padding=3,
             token=Token.Dialog)
 
@@ -50,7 +50,7 @@ class InputDialog(object):
 
         self.dialog = Dialog(
             loop=loop,
-            title=title, 
+            title=title,
             body=HSplit([
                 Label(loop=loop, text=text),
                 self.textfield,
@@ -68,7 +68,7 @@ class MessageDialog(object):
     def __init__(self, loop, title='', text='', ok_handler=None):
         self.dialog = Dialog(
             loop=loop,
-            title=title, 
+            title=title,
             body=HSplit([
                 Label(loop=loop, text=text),
             ]),
@@ -84,7 +84,7 @@ class YesNoDialog(object):
     def __init__(self, loop, title='', text='', yes_handler=None, no_handler=None):
         self.dialog = Dialog(
             loop=loop,
-            title=title, 
+            title=title,
             body=HSplit([
                 Label(loop=loop, text=text),
             ]),

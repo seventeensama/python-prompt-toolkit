@@ -5,32 +5,26 @@ from __future__ import unicode_literals
 
 from functools import partial
 from prompt_toolkit.application import Application
-from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.document import Document
-from prompt_toolkit.eventloop.base import EventLoop
 from prompt_toolkit.eventloop.defaults import create_event_loop
-from prompt_toolkit.filters import Condition, has_focus
+from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align, to_window, FloatContainer, Float, Container, ConditionalContainer
-from prompt_toolkit.layout.controls import BufferControl, TokenListControl, UIControlKeyBindings
+from prompt_toolkit.layout.containers import VSplit, HSplit, Window, FloatContainer, Float, ConditionalContainer
+from prompt_toolkit.layout.controls import TokenListControl
 from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
-from prompt_toolkit.layout.processors import PasswordProcessor
+from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, InputDialog, MessageDialog, Button, RadioButtonList
 from prompt_toolkit.styles.from_pygments import style_from_pygments
 from prompt_toolkit.token import Token
-from prompt_toolkit.utils import get_cwidth
 from pygments.lexers import HtmlLexer
 
+
 loop = create_event_loop()
-
-from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, Shadow, InputDialog, MessageDialog, Button, RadioButtonList
-
 
 class MenuContainer(object):
     def __init__(self, body, menu_items=None):

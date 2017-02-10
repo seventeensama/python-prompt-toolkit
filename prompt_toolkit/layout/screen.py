@@ -161,10 +161,13 @@ class Screen(object):
         For all the characters in the screen. Set the token to the given `token`.
         """
         b = self.data_buffer
+        char_cache = _CHAR_CACHE
+
+        prepend_token = tuple(token) + (':', )
 
         for y, row in b.items():
             for x, char in row.items():
-                b[y][x] = _CHAR_CACHE[char.char, token]
+                b[y][x] = char_cache[char.char, prepend_token + char.token]
 
     def fill_area(self, write_position, token=None):
         """

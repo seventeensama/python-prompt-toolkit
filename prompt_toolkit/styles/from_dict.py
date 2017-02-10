@@ -9,12 +9,10 @@ This is very similar to the Pygments style dictionary, with some additions:
   The ``|`` operation can be used to combine multiple tokens.
 """
 from collections import Mapping
-import itertools
 
 from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
 from .defaults import DEFAULT_STYLE_EXTENSIONS
 from .utils import merge_attrs, split_token_in_parts
-from six.moves import range
 
 __all__ = (
     'style_from_dict',
@@ -36,7 +34,7 @@ def _colorformat(text):
             return col
         elif len(col) == 3:
             return col[0]*2 + col[1]*2 + col[2]*2
-    elif text == '':
+    elif text in ('', 'default'):
         return text
 
     raise ValueError('Wrong color format %r' % text)
@@ -80,6 +78,8 @@ def style_from_dict(style_dict, include_defaults=True):
     # (Loop through the tokens in order. Sorting makes sure that
     # we process the parent first.)
     for ttype, styledef in sorted(style_dict.items()):
+        important = False
+
         # Start from default Attrs.
         if 'noinherit' in styledef:
             attrs = DEFAULT_ATTRS
@@ -90,6 +90,8 @@ def style_from_dict(style_dict, include_defaults=True):
         for part in styledef.split():
             if part == 'noinherit':
                 pass
+            elif part == 'important':
+                important = True
             elif part == 'bold':
                 attrs = attrs._replace(bold=True)
             elif part == 'nobold':
@@ -125,7 +127,7 @@ def style_from_dict(style_dict, include_defaults=True):
             else:
                 attrs = attrs._replace(color=_colorformat(part))
 
-        token_to_attrs[split_token_in_parts(ttype)] = attrs
+        token_to_attrs[split_token_in_parts(ttype)] = attrs, important
 
     return _StyleFromDict(token_to_attrs)
 
@@ -171,16 +173,22 @@ class _StyleFromDict(Style):
 
         combos = sorted(combos, key=flattened_len)
 
-        # Get list of Attrs, according to matches in our Style.
-        list_of_attrs = [DEFAULT_ATTRS]
+        # Get list of Attrs, according to matches in our Style, along with
+        # their importance.
+        list_of_attrs_and_importance = [(DEFAULT_ATTRS, False)]
 
         for combo in combos:
             try:
-                attrs = self.token_to_attrs[combo]
+                attrs_and_importance = self.token_to_attrs[combo]
             except KeyError:
                 pass
             else:
-                list_of_attrs.append(attrs)
+                list_of_attrs_and_importance.append(attrs_and_importance)
+
+        # Sort the Attrs objects that we have according to their importance.
+        # This is a stable sort, so the order won't change for things that have
+        # the same priority.
+        list_of_attrs = [a[0] for a in sorted(list_of_attrs_and_importance, key=lambda a: a[1])]
 
         return merge_attrs(list_of_attrs)
 

@@ -39,7 +39,7 @@ class _TokenType(tuple):
         Concatenate two token types. (Compare it with an HTML element that has
         two classnames.) The styling of those two tokens will be combined.
         """
-        assert isinstance(other, _TokenType), other
+        assert isinstance(other, _TokenType), 'Expecting Token, got %r: type=%r' % (other, type(other))
 
         try:
             return _token_or_cache[self, other]

@@ -4,10 +4,11 @@ Used for syntax highlighting.
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
+from collections import defaultdict
 from six import with_metaclass
 from six.moves import range
 
-from prompt_toolkit.token import Token
+from prompt_toolkit.token import Token, _TokenType
 from prompt_toolkit.filters import to_app_filter
 from .utils import split_lines
 
@@ -45,6 +46,7 @@ class SimpleLexer(Lexer):
     :param token: The `Token` for this lexer.
     """
     def __init__(self, token=Token):
+        assert isinstance(token, _TokenType)
         self.token = token
 
     def lex_document(self, app, document):
@@ -142,6 +144,22 @@ class RegexSync(SyntaxSync):
         }
         p = patterns.get(lexer_cls.name, '^')
         return cls(p)
+
+
+class _TokenCache(dict):
+    """
+    Cache that converts Pygments tokens into `prompt_toolkit` token objects.
+
+    This is required because prompt_toolkit has some additional functionality,
+    like an `|` operator that it implements.
+    """
+    def __missing__(self, key):
+        # Cache from Pygments Tokens to prompt_toolkit Tokens.
+        value = _TokenType(key)
+        self[key] = value
+        return value
+
+_token_cache = _TokenCache()
 
 
 class PygmentsLexer(Lexer):
@@ -248,7 +266,9 @@ class PygmentsLexer(Lexer):
                 # Pygments should return exactly the same amount of text, as we
                 # have given as input.)
                 for _, t, v in self.pygments_lexer.get_tokens_unprocessed(text):
-                    yield t, v
+                    # Turn Pygments `Token` object into prompt_toolkit `Token`
+                    # objects.
+                    yield _token_cache[t], v
 
             return enumerate(split_lines(get_tokens()), start_lineno)
 

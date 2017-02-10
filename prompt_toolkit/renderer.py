@@ -436,7 +436,7 @@ class Renderer(object):
             width=size.columns,
             height=(size.rows if self.use_alternate_screen else height),
             extended_height=size.rows,
-        ))
+        ), Token)
 
         # When grayed. Replace all tokens in the new screen.
         if app.is_aborting or app.is_exiting:

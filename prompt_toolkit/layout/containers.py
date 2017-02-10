@@ -68,13 +68,16 @@ class Container(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def write_to_screen(self, app, screen, mouse_handlers, write_position):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
         """
         Write the actual content to the screen.
 
         :param app: :class:`~prompt_toolkit.application.Application`.
         :param screen: :class:`~prompt_toolkit.layout.screen.Screen`
         :param mouse_handlers: :class:`~prompt_toolkit.layout.mouse_handlers.MouseHandlers`.
+        :param token: Token to pass to the `Window` object. This will be
+            applied to all content of the windows. `VSplit` and `HSplit` can
+            use it to pass tokens down to the windows that they contain.
         """
 
     @abstractmethod
@@ -158,7 +161,7 @@ class HSplit(Container):
         " Sum of the space required in between children. "
         return self.padding * (len(self.children) - 1)
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
         """
         Render the prompt to a `Screen` instance.
 
@@ -170,9 +173,12 @@ class HSplit(Container):
         if self.report_dimensions_callback:
             self.report_dimensions_callback(app, sizes)
 
+        if self.token:
+            token = token | self.token
+
         if sizes is None:
             self.window_too_small.write_to_screen(
-                app, screen, mouse_handlers, write_position)
+                app, screen, mouse_handlers, write_position, token)
         else:
             # Draw child panes.
             ypos = write_position.ypos
@@ -190,12 +196,10 @@ class HSplit(Container):
                     ypos += (available_height - total_height) // 2
 
             for s, c in zip(sizes, self.children):
-                c.write_to_screen(app, screen, mouse_handlers, WritePosition(xpos, ypos, width, s))
+                c.write_to_screen(app, screen, mouse_handlers,
+                                  WritePosition(xpos, ypos, width, s), token)
                 ypos += s
                 ypos += self.padding
-
-        if self.token:
-            screen.fill_area(write_position, token=self.token)
 
     def _divide_heigths(self, app, write_position):
         """
@@ -373,7 +377,7 @@ class VSplit(Container):
 
         return sizes
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
         """
         Render the prompt to a `Screen` instance.
 
@@ -388,10 +392,13 @@ class VSplit(Container):
         if self.report_dimensions_callback:
             self.report_dimensions_callback(app, sizes)
 
+        if self.token:
+            token = token | self.token
+
         # If there is not enough space.
         if sizes is None:
             self.window_too_small.write_to_screen(
-                app, screen, mouse_handlers, write_position)
+                app, screen, mouse_handlers, write_position, token)
             return
 
         # Calculate heights, take the largest possible, but not larger than
@@ -415,7 +422,8 @@ class VSplit(Container):
                 xpos += (available_width - total_width) // 2
 
         for s, c in zip(sizes, self.children):
-            c.write_to_screen(app, screen, mouse_handlers, WritePosition(xpos, ypos, s, height))
+            c.write_to_screen(app, screen, mouse_handlers,
+                              WritePosition(xpos, ypos, s, height), token)
             xpos += s
             xpos += self.padding
 
@@ -467,8 +475,8 @@ class FloatContainer(Container):
         """
         return self.content.preferred_height(app, width, max_available_height)
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position):
-        self.content.write_to_screen(app, screen, mouse_handlers, write_position)
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
+        self.content.write_to_screen(app, screen, mouse_handlers, write_position, token)
 
         for fl in self.floats:
             # When a menu_position was given, use this instead of the cursor
@@ -581,11 +589,8 @@ class FloatContainer(Container):
                                    ypos=ypos + write_position.ypos,
                                    width=width, height=height)
 
-                if not fl.transparant:
-                    self._erase(screen, wp)
-
                 if not fl.hide_when_covering_content or self._area_is_empty(screen, wp):
-                    fl.content.write_to_screen(app, screen, mouse_handlers, wp)
+                    fl.content.write_to_screen(app, screen, mouse_handlers, wp, token)
 
     def _area_is_empty(self, screen, write_position):
         """
@@ -606,16 +611,6 @@ class FloatContainer(Container):
 
         return True
 
-    def _erase(self, screen, write_position):
-        " Erase this area. "
-        wp = write_position
-        char = _CHAR_CACHE[' ', Token]
-
-        for y in range(wp.ypos, wp.ypos + wp.height):
-            row = screen.data_buffer[y]
-            for x in range(wp.xpos, wp.xpos + wp.width):
-                row[x] = char
-
     def walk(self):
         """ Walk through children. """
         yield self
@@ -634,16 +629,14 @@ class Float(object):
 
     :param content: :class:`.Container` instance.
     :param hide_when_covering_content: Hide the float when it covers content underneath.
-    :param transparant: When `False`, first erase everything underneath.
     """
     def __init__(self, top=None, right=None, bottom=None, left=None,
                  width=None, height=None, get_width=None, get_height=None,
                  xcursor=None, ycursor=None, content=None,
-                 hide_when_covering_content=False, transparant=True):
+                 hide_when_covering_content=False):
         assert width is None or get_width is None
         assert height is None or get_height is None
-        assert isinstance(transparant, bool)
-        assert not (hide_when_covering_content and not transparant)
+        assert isinstance(hide_when_covering_content, bool)
 
         self.left = left
         self.right = right
@@ -661,7 +654,6 @@ class Float(object):
 
         self.content = to_container(content)
         self.hide_when_covering_content = hide_when_covering_content
-        self.transparant = transparant
 
     def get_width(self, app):
         if self._width:
@@ -990,6 +982,10 @@ class Window(Container):
     :param char: Character to be used for filling the background.
     :param get_token: Callable that takes an `Application` and returns the token
         to be applied to all the cells in this window.
+    :param transparent: When `False`, first erase everything underneath. (This
+        is mainly useful if this Window is displayed inside a `Float`.)
+        (when `char` or `get_char` is geven, it will never be transparant
+        anyway, and this parameter doesn't change anything.)
     """
     def __init__(self, content=None, width=None, height=None, get_width=None,
                  get_height=None, dont_extend_width=False, dont_extend_height=False,
@@ -998,7 +994,8 @@ class Window(Container):
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
                  cursorline=False, cursorcolumn=False, get_colorcolumns=None,
                  cursorline_token=Token.CursorLine, cursorcolumn_token=Token.CursorColumn,
-                 align=Align.LEFT, token=None, get_token=None, char=None, get_char=None):
+                 align=Align.LEFT, token=None, get_token=None, char=None,
+                 get_char=None, transparent=True):
         assert content is None or isinstance(content, UIControl)
         assert width is None or isinstance(width, (Dimension, int))
         assert height is None or isinstance(height, (Dimension, int))
@@ -1019,6 +1016,7 @@ class Window(Container):
         assert char is None or isinstance(char, text_type)
         assert get_char is None or callable(get_char)
         assert not (char and get_char)
+        assert isinstance(transparent, bool)
 
         self.allow_scroll_beyond_bottom = to_app_filter(allow_scroll_beyond_bottom)
         self.always_hide_cursor = to_app_filter(always_hide_cursor)
@@ -1044,6 +1042,7 @@ class Window(Container):
         self.get_token = get_token
         self.char = char
         self.get_char = get_char
+        self.transparent = transparent
 
         # Cache for the screens generated by the margin.
         self._ui_content_cache = SimpleCache(maxsize=8)
@@ -1171,7 +1170,7 @@ class Window(Container):
             return '?'
         return False
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
         """
         Write window to screen. This renders the user control, the margins and
         copies everything over to the absolute position at the given screen.
@@ -1195,6 +1194,9 @@ class Window(Container):
 
         scroll_func(
             ui_content, write_position.width - total_margin_width, write_position.height, app)
+
+        # Erase background and fill with `char`.
+        self._fill_bg(app, screen, write_position)
 
         # Write body
         visible_line_to_row_col, rowcol_to_yx = self._copy_body(
@@ -1306,7 +1308,7 @@ class Window(Container):
             move_x += width
 
         # Apply 'self.token'
-        self._apply_token(app, screen, write_position)
+        self._apply_token(app, screen, write_position, token)
 
         # Tell the screen that this user control has been painted.
         screen.visible_windows.append(self)
@@ -1463,16 +1465,37 @@ class Window(Container):
 
         return visible_line_to_row_col, rowcol_to_yx
 
-    def _apply_token(self, app, new_screen, write_position):
-        # Apply `self.char` and `self.token`.
-        token = self.token if self.get_token is None else self.get_token(app)
-        char = self.char if self.get_char is None else self.get_char(app)
-        if char or token:
-            new_screen.fill_area(write_position, token=token, char=char)
+    def _fill_bg(self, app, screen, write_position):
+        """
+        Erase/fill the background.
+        (Useful for floats and when a `char` has been given.)
+        """
+        if self.get_char:
+            char = self.get_char(app)
+        else:
+            char = self.char
 
-        # Add 'Token.Focussed' if this window got the focus.
+        if not self.transparent or char:
+            wp = write_position
+            char = _CHAR_CACHE[char or ' ', Token]
+
+            for y in range(wp.ypos, wp.ypos + wp.height):
+                row = screen.data_buffer[y]
+                for x in range(wp.xpos, wp.xpos + wp.width):
+                    row[x] = char
+
+    def _apply_token(self, app, new_screen, write_position, token):
+        # Apply `self.token`.
+        if self.get_token:
+            token = token | self.get_token(app)
+        elif self.token:
+            token = token | self.token
+
         if app.layout.current_window == self:
-            new_screen.fill_area(write_position, token=Token.Focussed)
+            token = token | Token.Focussed
+
+        if len(token):
+            new_screen.fill_area(write_position, token=token)
 
     def _highlight_digraph(self, app, new_screen):
         """
@@ -1795,9 +1818,10 @@ class ConditionalContainer(Container):
         else:
             return Dimension.zero()
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
         if self.filter(app):
-            return self.content.write_to_screen(app, screen, mouse_handlers, write_position)
+            return self.content.write_to_screen(
+                app, screen, mouse_handlers, write_position, token)
 
     def walk(self):
         return self.content.walk()

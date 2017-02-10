@@ -125,9 +125,6 @@ class Screen(object):
         # this list.)
         self.visible_windows = []
 
-    @property
-    def cursor_position(self):  raise ''# XXX: remove
-
     def set_cursor_position(self, window, position):
         " Set the cursor position for a given window. "
         self.cursor_positions[window] = position
@@ -169,7 +166,7 @@ class Screen(object):
             for x, char in row.items():
                 b[y][x] = _CHAR_CACHE[char.char, token]
 
-    def fill_area(self, write_position, token=None, char=None):
+    def fill_area(self, write_position, token=None):
         """
         Fill the content of this area, using the given `token` and character.
         """
@@ -187,12 +184,7 @@ class Screen(object):
             row = data_buffer[y]
             for x in range(xmin, xmax):
                 cell = row[x]
-                c = cell.char
-
-                if char:# and c.isspace():
-                    c = char
-
-                row[x] = char_cache[c, prepend_token + cell.token]
+                row[x] = char_cache[cell.char, prepend_token + cell.token]
 
 
 class WritePosition(object):

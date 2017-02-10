@@ -427,9 +427,6 @@ class VSplit(Container):
             xpos += s
             xpos += self.padding
 
-        if self.token:
-            screen.fill_area(write_position, token=self.token)
-
     def walk(self):
         """ Walk through children. """
         yield self
@@ -1488,7 +1485,7 @@ class Window(Container):
         # Apply `self.token`.
         if self.get_token:
             token = token | self.get_token(app)
-        elif self.token:
+        if self.token:
             token = token | self.token
 
         if app.layout.current_window == self:

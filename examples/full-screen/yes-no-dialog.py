@@ -83,7 +83,7 @@ class MenuContainer(object):
             ]),
             floats=[
                 Float(xcursor=self.window, ycursor=self.window,#top=1, left=1,
-                    content=self._submenu(), transparant=False),
+                    content=self._submenu()),
                 Float(xcursor=True,
                       ycursor=True,
                       content=CompletionsMenu(
@@ -134,7 +134,8 @@ class MenuContainer(object):
             content=Window(
                 TokenListControl(get_tokens),
                 cursorline=True,
-                token=Token.Menu),
+                token=Token.Menu,
+                transparent=False),
             filter=Condition(lambda app: app.layout.current_window == self.window))
 
     def __pt_container__(self):

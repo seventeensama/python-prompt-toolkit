@@ -156,12 +156,18 @@ class MenuItem(object):
 class ProgressBar(object):
     def __init__(self, loop):
         self.container = FloatContainer(
-            content=VSplit([
-                Window(token=Token.ProgressBar.Used, height=1, width=D(weight=60)),
-                Window(token=Token.ProgressBar, height=1, width=D(weight=40)),
-            ]),
+            content=Window(height=1),
             floats=[
+                # We first draw the label, than the actual progress bar.  Right
+                # now, this is the only way to have the colors of the progress
+                # bar appear on to of the label. The problem is that our label
+                # can't be part of any `Window` below.
                 Float(content=Label(loop, '60%'), top=0, bottom=0),
+
+                Float(left=0, top=0, right=0, bottom=0, content=VSplit([
+                    Window(token=Token.ProgressBar.Used, width=D(weight=60)),
+                    Window(token=Token.ProgressBar, width=D(weight=40)),
+                ])),
             ])
 
     def __pt_container__(self):

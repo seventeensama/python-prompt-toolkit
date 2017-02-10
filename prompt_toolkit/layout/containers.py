@@ -180,10 +180,16 @@ class HSplit(Container):
             self.window_too_small.write_to_screen(
                 app, screen, mouse_handlers, write_position, token)
         else:
-            # Draw child panes.
+            #
             ypos = write_position.ypos
             xpos = write_position.xpos
             width = write_position.width
+
+            def fill_padding(start_y, height):
+                if width:
+                    screen.fill_area(
+                        WritePosition(xpos=xpos, ypos=start_y,
+                                      width=write_position.width, height=height), token)
 
             # Shift 'ypos' in the case of top/center/bottom alignment.
             if self.align != VerticalAlign.JUSTIFY:
@@ -191,15 +197,29 @@ class HSplit(Container):
                 available_height = write_position.height - self._total_padding
 
                 if self.align == VerticalAlign.BOTTOM:
-                    ypos += available_height - total_height
+                    shift = available_height - total_height
                 elif self.align == VerticalAlign.CENTER:
-                    ypos += (available_height - total_height) // 2
+                    shift = (available_height - total_height) // 2
+                else:
+                    shift = 0
 
+                fill_padding(ypos, shift)
+                ypos += shift
+
+            # Draw child panes.
             for s, c in zip(sizes, self.children):
                 c.write_to_screen(app, screen, mouse_handlers,
                                   WritePosition(xpos, ypos, width, s), token)
                 ypos += s
-                ypos += self.padding
+
+                if self.padding:
+                    fill_padding(ypos, self.padding)
+                    ypos += self.padding
+
+            # Draw bottom padding.
+            max_ypos = write_position.ypos + write_position.height
+            if ypos < max_ypos:
+                fill_padding(xpos, max_ypos - ypos)
 
     def _divide_heigths(self, app, write_position):
         """
@@ -407,9 +427,15 @@ class VSplit(Container):
                    for width, child in zip(sizes, self.children)]
         height = max(write_position.height, min(write_position.extended_height, max(heights)))
 
-        # Draw child panes.
+        #
         ypos = write_position.ypos
         xpos = write_position.xpos
+
+        def fill_padding(start_x, width):
+            if width:
+                screen.fill_area(
+                    WritePosition(xpos=start_x, ypos=ypos, width=width,
+                                  height=write_position.height), token)
 
         # Shift 'ypos' in the case of top/center/bottom alignment.
         if self.align != HorizontalAlign.JUSTIFY:
@@ -417,15 +443,31 @@ class VSplit(Container):
             available_width = write_position.width - self._total_padding
 
             if self.align == HorizontalAlign.RIGHT:
-                xpos += available_width - total_width
+                shift = available_width - total_width
             elif self.align == HorizontalAlign.CENTER:
-                xpos += (available_width - total_width) // 2
+                shift = (available_width - total_width) // 2
+            else:
+                shift = 0
 
+            # Fill left and shift.
+            fill_padding(xpos, shift)
+            xpos += shift
+
+        # Draw all child panes.
         for s, c in zip(sizes, self.children):
             c.write_to_screen(app, screen, mouse_handlers,
                               WritePosition(xpos, ypos, s, height), token)
             xpos += s
-            xpos += self.padding
+
+            if self.padding:
+                # Make sure to fill the padding area.
+                fill_padding(xpos, self.padding)
+                xpos += self.padding
+
+        # Draw right padding.
+        max_xpos = write_position.xpos + write_position.width
+        if xpos < max_xpos:
+            fill_padding(xpos, max_xpos - xpos)
 
     def walk(self):
         """ Walk through children. """

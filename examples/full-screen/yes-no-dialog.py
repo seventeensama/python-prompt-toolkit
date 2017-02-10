@@ -240,7 +240,7 @@ root_container = HSplit([
         body=VSplit([
             yes_button,
             no_button,
-        ], align='CENTER', padding=1),
+        ], align='BOTTOM', padding=1),
         padding=1,
         token=Token.Buttonbar,
     ),

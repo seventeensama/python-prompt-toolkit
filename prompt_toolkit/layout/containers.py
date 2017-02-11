@@ -523,7 +523,7 @@ class FloatContainer(Container):
             # relative to the write_position.)
             # Note: This should be inside the for-loop, because one float could
             #       set the cursor position to be used for the next one.
-            cpos = screen.get_menu_position(app.layout.current_window)
+            cpos = screen.get_menu_position(fl.attach_to_window or app.layout.current_window)
             cursor_position = Point(x=cpos.x - write_position.xpos,
                                     y=cpos.y - write_position.ypos)
 
@@ -671,7 +671,7 @@ class Float(object):
     """
     def __init__(self, top=None, right=None, bottom=None, left=None,
                  width=None, height=None, get_width=None, get_height=None,
-                 xcursor=None, ycursor=None, content=None,
+                 xcursor=None, ycursor=None, attach_to_window=None, content=None,
                  hide_when_covering_content=False):
         assert width is None or get_width is None
         assert height is None or get_height is None
@@ -690,6 +690,11 @@ class Float(object):
 
         self.xcursor = xcursor
         self.ycursor = ycursor
+
+        if attach_to_window:
+            self.attach_to_window = to_window(attach_to_window)
+        else:
+            self.attach_to_window = None
 
         self.content = to_container(content)
         self.hide_when_covering_content = hide_when_covering_content
@@ -1834,9 +1839,7 @@ class ConditionalContainer(Container):
     :param filter: :class:`~prompt_toolkit.filters.AppFilter` instance.
     """
     def __init__(self, content, filter):
-        assert isinstance(content, Container)
-
-        self.content = content
+        self.content = to_container(content)
         self.filter = to_app_filter(filter)
 
     def __repr__(self):

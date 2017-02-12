@@ -44,7 +44,7 @@ class BORDER:
     TOP_RIGHT = '\u2510'
     BOTTOM_LEFT = '\u2514'
     BOTTOM_RIGHT = '\u2518'
-    LIGHT_VERTICAL = '\u2501'
+    #LIGHT_VERTICAL = '\u2501'
 
 
 class WIDE_BORDER:
@@ -55,7 +55,7 @@ class WIDE_BORDER:
     TOP_RIGHT = '\u2513'
     BOTTOM_LEFT = '\u2517'
     BOTTOM_RIGHT = '\u251b'
-    LIGHT_VERTICAL = '\u2502'
+    #LIGHT_VERTICAL = '\u2502'
 
 
 class SHADE:

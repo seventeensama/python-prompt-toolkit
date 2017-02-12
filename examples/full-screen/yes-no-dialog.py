@@ -19,6 +19,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, InputDialog, MessageDialog, Button, RadioButtonList, Shadow
+from prompt_toolkit.layout.widgets.base import BORDER
 from prompt_toolkit.styles.from_pygments import style_from_pygments
 from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
@@ -64,10 +65,11 @@ class MenuContainer(object):
 
         # Sub menu navigation.
 
+#        @kb.add(Keys.Escape, filter=in_sub_menu, eager=True)
         @kb.add(Keys.Left, filter=in_sub_menu)
         def _(event):
             " Go back to parent menu. "
-            if len(self.selected_menu) > 2:
+            if len(self.selected_menu) > 1:
                 self.selected_menu.pop()
 
         @kb.add(Keys.Right, filter=in_sub_menu)
@@ -111,6 +113,11 @@ class MenuContainer(object):
         submenu2 = self._submenu(1)
         submenu3 = self._submenu(2)
 
+        @Condition
+        def has_focus(app):
+            return app.layout.current_window == self.window
+
+
         self.container = FloatContainer(
             content=HSplit([
                 # The titlebar.
@@ -123,18 +130,17 @@ class MenuContainer(object):
                 Float(xcursor=self.window, ycursor=self.window,
                       content=ConditionalContainer(
                           content=Shadow(loop, body=submenu),
-                          filter=Condition(lambda app: app.layout.current_window == self.window))
-                ),
+                          filter=has_focus)),
                 Float(attach_to_window=submenu,
                       xcursor=True, ycursor=True,
                       content=ConditionalContainer(
                           content=Shadow(loop, body=submenu2),
-                          filter=Condition(lambda app: len(self.selected_menu) >= 1))),
+                          filter=has_focus & Condition(lambda app: len(self.selected_menu) >= 1))),
                 Float(attach_to_window=submenu2,
                       xcursor=True, ycursor=True,
                       content=ConditionalContainer(
                           content=Shadow(loop, body=submenu3),
-                          filter=Condition(lambda app: len(self.selected_menu) >= 2))),
+                          filter=has_focus & Condition(lambda app: len(self.selected_menu) >= 2))),
 
                 # --
                 Float(xcursor=True,
@@ -176,29 +182,38 @@ class MenuContainer(object):
             result = []
             if level < len(self.selected_menu):
                 menu = self._get_menu(level)
-                try:
-                    selected_item = self.selected_menu[level + 1]
-                except IndexError:
-                    selected_item = -1
+                if menu.children:
+                    result.append((Token.Menu, BORDER.TOP_LEFT))
+                    result.append((Token.Menu, BORDER.HORIZONTAL * (menu.width + 3)))
+                    result.append((Token.Menu, BORDER.TOP_RIGHT))
+                    result.append((Token, '\n'))
+                    try:
+                        selected_item = self.selected_menu[level + 1]
+                    except IndexError:
+                        selected_item = -1
 
-                for i, item in enumerate(menu.children):
-                    if i == selected_item:
-                        result.append((Token.SetCursorPosition, ''))
-                        token = Token.MenuBar.SelectedItem
-                    else:
-                        token = Token
+                    for i, item in enumerate(menu.children):
+                        if i == selected_item:
+                            result.append((Token.SetCursorPosition, ''))
+                            token = Token.MenuBar.SelectedItem
+                        else:
+                            token = Token
 
-                    if set(item.text) == {'-'}:
-                        result.append((token, ' {}'.format('-' * (menu.width + 2))))
-                    else:
-                        result.append((token, ' {}'.format(item.text).ljust(menu.width + 3)))
+                        result.append((Token.Menu, BORDER.VERTICAL))
+                        if set(item.text) == {'-'}:
+                            result.append((token, '{}'.format(BORDER.HORIZONTAL * (menu.width + 3))))
+                        else:
+                            result.append((token, ' {}'.format(item.text).ljust(menu.width + 3)))
 
-                    if i == selected_item:
-                        result.append((Token.SetMenuPosition, ''))
-                        result.append((token, ' '))
+                        if i == selected_item:
+                            result.append((Token.SetMenuPosition, ''))
+                        result.append((Token.Menu, BORDER.VERTICAL))
 
-                    if i != len(menu.children) - 1:
                         result.append((Token, '\n'))
+
+                    result.append((Token.Menu, BORDER.BOTTOM_LEFT))
+                    result.append((Token.Menu, BORDER.HORIZONTAL * (menu.width + 3)))
+                    result.append((Token.Menu, BORDER.BOTTOM_RIGHT))
             return result
 
         return Window(
@@ -222,7 +237,10 @@ class MenuItem(object):
 
     @property
     def width(self):
-        return max(get_cwidth(c.text) for c in self.children)
+        if self.children:
+            return max(get_cwidth(c.text) for c in self.children)
+        else:
+            return 0
 
 
 class ProgressBar(object):
@@ -320,6 +338,7 @@ root_container = HSplit([
 
 root_container = MenuContainer(root_container, menu_items=[
     MenuItem('File', children=[
+        MenuItem('New'),
         MenuItem('Open', children=[
             MenuItem('From file...'),
             MenuItem('From URL...'),
@@ -333,13 +352,25 @@ root_container = MenuContainer(root_container, menu_items=[
         ]),
         MenuItem('Save'),
         MenuItem('Save as...'),
-        MenuItem('----', disabled=True),
+        MenuItem('-', disabled=True),
         MenuItem('Exit'),
         ]),
     MenuItem('Edit', children=[
+        MenuItem('Undo'),
         MenuItem('Cut'),
         MenuItem('Copy'),
         MenuItem('Paste'),
+        MenuItem('Delete'),
+        MenuItem('-', disabled=True),
+        MenuItem('Find'),
+        MenuItem('Find next'),
+        MenuItem('Replace'),
+        MenuItem('Go To'),
+        MenuItem('Select All'),
+        MenuItem('Time/Date'),
+    ]),
+    MenuItem('View', children=[
+        MenuItem('Status Bar'),
     ]),
     MenuItem('Info', children=[
         MenuItem('About'),
@@ -357,17 +388,18 @@ style = style_from_pygments(style_dict={
     Token.Button.Arrow: 'bold',
     Token.Label: '#888888 reverse',
     Token.Window.Border: '#888888',
-    Token|Token.Shadow: '#888888 important',
+    Token.Shadow: 'bg:#222222',
 
     Token.MenuBar: 'bg:#aaaaaa #888888',
     Token.MenuBar.SelectedItem: 'bg:#ffffff #000000',
     Token.Menu: 'bg:#888888 #ffffff',
 #    Token.Menu | Token.CursorLine: 'reverse noinherit',
-    Token.Window.Border|Token.Shadow: 'bg:#aaaaaa',
+    Token.Window.Border|Token.Shadow: '#444444',
 
     Token.Dialog: 'bg:#4444ff',
     Token.Dialog | Token.Shadow: 'bg:#000088',
     Token.Dialog.Body: 'bg:#ffffff #000000',
+    Token.Dialog.Body | Token.Shadow: 'bg:#aaaaaa',
 
     Token.Focussed | Token.Button: 'bg:#880000 #ffffff noinherit',
 

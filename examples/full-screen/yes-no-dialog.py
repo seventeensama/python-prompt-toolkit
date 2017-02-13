@@ -78,6 +78,13 @@ class MenuContainer(object):
             if self._get_menu(len(self.selected_menu) - 1).children:
                 self.selected_menu.append(0)
 
+            # If This item does not have a sub menu. Go up in the parent menu.
+            elif len(self.selected_menu) == 2 and self.selected_menu[0] < len(self.menu_items) - 1:
+                self.selected_menu = [min(
+                    len(self.menu_items) - 1, self.selected_menu[0] + 1)]
+                if self.menu_items[self.selected_menu[0]].children:
+                    self.selected_menu.append(0)
+
         @kb.add(Keys.Up, filter=in_sub_menu)
         def _(event):
             if len(self.selected_menu) == 2 and self.selected_menu[1] == 0:
@@ -184,7 +191,7 @@ class MenuContainer(object):
                 menu = self._get_menu(level)
                 if menu.children:
                     result.append((Token.Menu, BORDER.TOP_LEFT))
-                    result.append((Token.Menu, BORDER.HORIZONTAL * (menu.width + 3)))
+                    result.append((Token.Menu, BORDER.HORIZONTAL * (menu.width + 4)))
                     result.append((Token.Menu, BORDER.TOP_RIGHT))
                     result.append((Token, '\n'))
                     try:
@@ -201,9 +208,14 @@ class MenuContainer(object):
 
                         result.append((Token.Menu, BORDER.VERTICAL))
                         if set(item.text) == {'-'}:
-                            result.append((token, '{}'.format(BORDER.HORIZONTAL * (menu.width + 3))))
+                            result.append((token | Token.Menu.Border, '{}'.format(BORDER.HORIZONTAL * (menu.width + 3))))
                         else:
                             result.append((token, ' {}'.format(item.text).ljust(menu.width + 3)))
+
+                        if item.children:
+                            result.append((token, '>'))
+                        else:
+                            result.append((token, ' '))
 
                         if i == selected_item:
                             result.append((Token.SetMenuPosition, ''))
@@ -212,7 +224,7 @@ class MenuContainer(object):
                         result.append((Token, '\n'))
 
                     result.append((Token.Menu, BORDER.BOTTOM_LEFT))
-                    result.append((Token.Menu, BORDER.HORIZONTAL * (menu.width + 3)))
+                    result.append((Token.Menu, BORDER.HORIZONTAL * (menu.width + 4)))
                     result.append((Token.Menu, BORDER.BOTTOM_RIGHT))
             return result
 
@@ -393,7 +405,7 @@ style = style_from_pygments(style_dict={
     Token.MenuBar: 'bg:#aaaaaa #888888',
     Token.MenuBar.SelectedItem: 'bg:#ffffff #000000',
     Token.Menu: 'bg:#888888 #ffffff',
-#    Token.Menu | Token.CursorLine: 'reverse noinherit',
+    Token.Menu.Border: '#aaaaaa',
     Token.Window.Border|Token.Shadow: '#444444',
 
     Token.Dialog: 'bg:#4444ff',

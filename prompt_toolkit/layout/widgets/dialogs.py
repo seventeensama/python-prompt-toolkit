@@ -28,10 +28,7 @@ class Dialog(object):
                     body=HSplit([
                         # Wrap the content in a `Box`, so that the Dialog can
                         # be larger than the content.
-                        Box(
-                            loop=loop,
-                            body=body,
-                        ),
+                        body,
                         # The buttons.
                         Box(
                             loop=loop,
@@ -59,7 +56,9 @@ class InputDialog(object):
             loop=loop,
             title=title,
             body=HSplit([
-                Label(loop=loop, text=text),
+                Box(loop=loop,
+                    body=Label(loop=loop, text=text)
+                ),
                 self.textfield,
             ]),
             buttons=[
@@ -76,9 +75,7 @@ class MessageDialog(object):
         self.dialog = Dialog(
             loop=loop,
             title=title,
-            body=HSplit([
-                Label(loop=loop, text=text),
-            ]),
+            body=Box(loop=loop, body=Label(loop=loop, text=text)),
             buttons=[
                 Button('Ok', handler=ok_handler),
             ])
@@ -92,9 +89,7 @@ class YesNoDialog(object):
         self.dialog = Dialog(
             loop=loop,
             title=title,
-            body=HSplit([
-                Label(loop=loop, text=text),
-            ]),
+            body=Box(loop, body=Label(loop=loop, text=text)),
             buttons=[
                 Button('Yes', handler=yes_handler),
                 Button('no', handler=no_handler),

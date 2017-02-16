@@ -108,12 +108,9 @@ class Label(object):
     def __init__(self, loop, text, token=None, width=None):
         assert isinstance(loop, EventLoop)
 
-        if width is not None:
-            w = width
-        elif '\n' in text:
-            width = D()
-        else:
-            width = D.exact(get_cwidth(text))
+        if width is None:
+            longest_line = max(get_cwidth(line) for line in text.splitlines())
+            width = D.exact(longest_line)
 
         self.buffer = Buffer(loop=loop, document=Document(text, 0))
         self.buffer_control = BufferControl(self.buffer, focussable=False)

@@ -92,6 +92,25 @@ DEFAULT_STYLE_EXTENSIONS = {
 
     # Entering a Vi digraph.
     Token.Digraph:                                '#4444ff',
+
+    ###
+    ### WIDGETS
+    ###
+
+    # Buttons.
+    Token.Button:                                 '',
+    Token.Button.Arrow:                           'bold',
+
+    # Dialog windows.
+    Token.Dialog:                                 'bg:#4444ff',
+    Token.Dialog.Body:                            'bg:#ffffff #000000',
+    Token.Dialog | Token.Frame.Label:             '#ff0000 bold',
+    Token.Dialog.Body | Token.Button | Token.Focussed: 'bg:#880000 #ffffff',
+    Token.Dialog.Body | Token.TextArea:           'bg:#cccccc underline',
+
+    # Shadows.
+    Token.Dialog | Token.Shadow:                  'bg:#000088',
+    Token.Dialog.Body | Token.Shadow:             'bg:#aaaaaa',
 }
 
 default_style_extensions = DEFAULT_STYLE_EXTENSIONS  # Old name.

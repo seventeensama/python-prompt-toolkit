@@ -7,7 +7,6 @@ from functools import partial
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
 from prompt_toolkit.eventloop.base import EventLoop
-from prompt_toolkit.filters import has_focus
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.token import Token
@@ -16,7 +15,6 @@ from prompt_toolkit.utils import get_cwidth
 from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
 from ..controls import BufferControl, TokenListControl
 from ..dimension import Dimension as D
-from ..menus import CompletionsMenu
 from ..processors import PasswordProcessor
 from ..margins import ScrollbarMargin
 

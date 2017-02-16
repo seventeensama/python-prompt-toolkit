@@ -3,6 +3,7 @@ Layout dimensions are used to give the minimum, maximum and preferred
 dimensions for containers and controls.
 """
 from __future__ import unicode_literals
+from collections import namedtuple
 
 __all__ = (
     'Dimension',

@@ -8,6 +8,7 @@ import weakref
 
 from wcwidth import wcwidth
 from six.moves import range
+from .cache import memoized
 
 
 __all__ = (
@@ -67,7 +68,7 @@ class Event(object):
         """
         # Test handler.
         assert callable(handler)
-        if not test_callable_args(handler, [None]):
+        if not _func_takes_one_arg(handler):
             raise TypeError("%r doesn't take exactly one argument." % handler)
 
         # Add to list of event handlers.
@@ -86,20 +87,21 @@ class Event(object):
 # Cache of signatures. Improves the performance of `test_callable_args`.
 _signatures_cache = weakref.WeakKeyDictionary()
 
+_inspect_signature = getattr(inspect, 'signature', None)  # Only on Python 3.
+
 
 def test_callable_args(func, args):
     """
     Return True when this function can be called with the given arguments.
     """
     assert isinstance(args, (list, tuple))
-    signature = getattr(inspect, 'signature', None)
 
-    if signature is not None:
+    if _inspect_signature is not None:
         # For Python 3, use inspect.signature.
         try:
             sig = _signatures_cache[func]
         except KeyError:
-            sig = signature(func)
+            sig = _inspect_signature(func)
             _signatures_cache[func] = sig
 
         try:
@@ -128,6 +130,14 @@ def test_callable_args(func, args):
         # Test whether the given amount of args is between the min and max
         # accepted argument counts.
         return len(spec.args) - len(spec.defaults or []) <= len(args) <= len(spec.args)
+
+
+@memoized(maxsize=1024)
+def _func_takes_one_arg(func):
+    """
+    Test whether the given function can be called with exactly one argument.
+    """
+    return test_callable_args(func, [None])
 
 
 class DummyContext(object):

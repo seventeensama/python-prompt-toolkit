@@ -281,6 +281,16 @@ class Application(object):
         # Trigger reset event.
         self.on_reset.fire()
 
+        # Make sure that we have a 'focussable' widget focussed.
+        # (The `Layout` class can't determine this.)
+        layout = self.layout
+
+        if not layout.current_control.is_focussable(self):
+            for w in layout.find_all_windows():
+                if w.content.is_focussable(self):
+                    layout.current_window = w
+                    break
+
     def invalidate(self):
         """
         Thread safe way of sending a repaint trigger to the input event loop.
@@ -366,8 +376,10 @@ class Application(object):
         self._invalidate_events = list(gather_events())
 
         # Attach invalidate event handler.
+        invalidate = lambda sender: self.invalidate()
+
         for ev in self._invalidate_events:
-            ev += lambda sender: self.invalidate()
+            ev += invalidate
 
     def _on_resize(self):
         """

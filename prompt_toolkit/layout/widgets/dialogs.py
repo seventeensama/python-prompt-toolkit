@@ -10,6 +10,7 @@ __all__ = (
     'Dialog',
     'InputDialog',
     'MessageDialog',
+    'YesNoDialog',
 )
 
 
@@ -25,7 +26,13 @@ class Dialog(object):
                     loop=loop,
                     title=title,
                     body=HSplit([
-                        body,
+                        # Wrap the content in a `Box`, so that the Dialog can
+                        # be larger than the content.
+                        Box(
+                            loop=loop,
+                            body=body,
+                        ),
+                        # The buttons.
                         Box(
                             loop=loop,
                             body=VSplit(buttons, padding=1),

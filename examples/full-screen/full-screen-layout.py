@@ -9,7 +9,6 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
@@ -54,7 +53,7 @@ body = VSplit([
     # A vertical line in the middle. We explicitely specify the width, to make
     # sure that the layout engine will not try to divide the whole width by
     # three for all these windows.
-    Window(width=D.exact(1), char='|', token=Token.Line),
+    Window(width=1, char='|', token=Token.Line),
 
     # Display the Result buffer on the right.
     right_window,
@@ -75,12 +74,12 @@ def get_titlebar_tokens(app):
 
 root_container = HSplit([
     # The titlebar.
-    Window(height=D.exact(1),
+    Window(height=1,
            content=TokenListControl(get_titlebar_tokens),
            align=Align.CENTER),
 
     # Horizontal separator.
-    Window(height=D.exact(1), char='-', token=Token.Line),
+    Window(height=1, char='-', token=Token.Line),
 
     # The 'body', like defined above.
     body,
@@ -139,7 +138,7 @@ all_bindings = merge_key_bindings([
 
 def default_buffer_changed(_):
     """
-    When the buffer on the left (DEFAULT_BUFFER) changes, update the buffer on
+    When the buffer on the left changes, update the buffer on
     the right. We just reverse the text.
     """
     right_buffer.text = left_buffer.text[::-1]

@@ -1201,7 +1201,6 @@ class Window(Container):
             dont_extend=self.dont_extend_height)
 
     @staticmethod
-    @memoized()
     def _merge_dimensions(dimension, get_preferred, dont_extend=False):
         """
         Take the Dimension from this `Window` class and the received preferred

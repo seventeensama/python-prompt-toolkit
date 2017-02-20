@@ -14,7 +14,7 @@ def test_style_from_dict():
                      underline=True, italic=True, blink=False, reverse=False)
     assert style.get_attrs_for_token(Token.A) == expected
 
-    expected = Attrs(color=None, bgcolor='00ff00', bold=False,
+    expected = Attrs(color='', bgcolor='00ff00', bold=False,
                      underline=False, italic=False, blink=True, reverse=True)
     assert style.get_attrs_for_token(Token.B) == expected
 

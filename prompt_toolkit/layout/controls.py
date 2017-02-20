@@ -18,7 +18,7 @@ from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
 from .lexers import Lexer, SimpleLexer
-from .processors import Processor, TransformationInput, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, MergedProcessor
+from .processors import Processor, TransformationInput, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, merge_processors
 
 from .screen import Point
 from .utils import split_lines, token_list_to_text
@@ -391,7 +391,7 @@ class BufferControl(UIControl):
 
     :param buffer: The `Buffer` object to be displayed.
     :param input_processor: A :class:`~prompt_toolkit.layout.processors.Processor`. (Use
-        :class:`~prompt_toolkit.layout.processors.MergedProcessor` if you want
+        :func:`~prompt_toolkit.layout.processors.merge_processors` if you want
         to apply multiple processors.)
     :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` instance for syntax highlighting.
     :param preview_search: `bool` or `AppFilter`: Show search while typing.
@@ -427,7 +427,7 @@ class BufferControl(UIControl):
 
         # Default input processor (display search and selection by default.)
         if input_processor is None:
-            input_processor = MergedProcessor([
+            input_processor = merge_processors([
                 HighlightSearchProcessor(),
                 HighlightSelectionProcessor(),
                 DisplayMultipleCursors(),

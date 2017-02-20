@@ -8,6 +8,7 @@ import os
 __all__ = (
     'FileHistory',
     'History',
+    'DummyHistory',
     'InMemoryHistory',
 )
 
@@ -43,6 +44,23 @@ class History(with_metaclass(ABCMeta, object)):
         return True
 
     __nonzero__ = __bool__  # For Python 2.
+
+
+class DummyHistory(History):
+    """
+    `History` object that doesn't remember anything.
+    """
+    def append(self, string):
+        pass
+
+    def __getitem__(self, key):
+        raise KeyError
+
+    def __iter__(self):
+        return iter([])
+
+    def __len__(self):
+        return 0
 
 
 class InMemoryHistory(History):

@@ -692,7 +692,7 @@ class Float(object):
         below the cursor. Not on top of the indicated position.
     """
     def __init__(self, content=None, top=None, right=None, bottom=None, left=None,
-                 width=None, height=None, get_width=None, get_height=None,  # XXX: depracate get_width/get_height?
+                 width=None, height=None, get_width=None, get_height=None,
                  xcursor=None, ycursor=None, attach_to_window=None,
                  hide_when_covering_content=False, allow_cover_cursor=False):
         assert width is None or get_width is None

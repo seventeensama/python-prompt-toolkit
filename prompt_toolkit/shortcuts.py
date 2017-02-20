@@ -49,7 +49,7 @@ from .layout.layout import Layout
 from .layout.lexers import DynamicLexer
 from .layout.margins import PromptMargin, ConditionalMargin
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from .layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, MergedProcessor
+from .layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
 from .layout.utils import explode_tokens
 from .output.defaults import create_output
@@ -334,7 +334,7 @@ class Prompt(object):
         search_buffer = Buffer(name=SEARCH_BUFFER, loop=self.loop)
 
         # Create processors list.
-        input_processor = MergedProcessor([
+        input_processor = merge_processors([
             ConditionalProcessor(
                 # By default, only highlight search when the search
                 # input has the focus. (Note that this doesn't mean
@@ -353,7 +353,7 @@ class Prompt(object):
 
             # For single line mode, show the prompt before the input.
             ConditionalProcessor(
-                MergedProcessor([
+                merge_processors([
                     BeforeInput(get_prompt_tokens_2),
                     ShowArg(),
                 ]),
@@ -371,7 +371,7 @@ class Prompt(object):
         search_toolbar = SearchToolbar(search_buffer)
         search_buffer_control = BufferControl(
             buffer=search_buffer,
-            input_processor=MergedProcessor([
+            input_processor=merge_processors([
                 ReverseSearchProcessor(),
                 ShowArg(),
             ]))

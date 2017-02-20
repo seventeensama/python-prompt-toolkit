@@ -42,7 +42,7 @@ __all__ = (
     'ShowTrailingWhiteSpaceProcessor',
     'TabsProcessor',
     'DynamicProcessor',
-    'MergedProcessor',
+    'merge_processors',
 )
 
 
@@ -648,13 +648,13 @@ class ReverseSearchProcessor(Processor):
         def filter_processor(item):
             """ Filter processors from the main control that we want to disable
             here. This returns either an accepted processor or None. """
-            # For a `MergedProcessor`, check each individual processor, recursively.
-            if isinstance(item, MergedProcessor):
+            # For a `_MergedProcessor`, check each individual processor, recursively.
+            if isinstance(item, _MergedProcessor):
                 accepted_processors = [filter_processor(p) for p in item.processors]
                 accepted_processors = [p for p in accepted_processors if p is not None]
 
                 if len(accepted_processors) > 1:
-                    return MergedProcessor(accepted_processors)
+                    return _MergedProcessor(accepted_processors)
                 elif accepted_processors == 1:
                     return accepted_processors[0]
 
@@ -673,7 +673,7 @@ class ReverseSearchProcessor(Processor):
         highlight_processor = HighlightSearchProcessor(preview_search=True)
 
         if filtered_processor:
-            new_processor = MergedProcessor([filtered_processor, highlight_processor])
+            new_processor = _MergedProcessor([filtered_processor, highlight_processor])
         else:
             new_processor = highlight_processor
 
@@ -776,7 +776,14 @@ class DynamicProcessor(Processor):
         return processor.apply_transformation(ti)
 
 
-class MergedProcessor(Processor):
+def merge_processors(processors):
+    """
+    Merge multiple `Processor` objects into one.
+    """
+    return _MergedProcessor(processors)
+
+
+class _MergedProcessor(Processor):
     """
     Processor that groups multiple other `Processor` objects, but exposes an
     API as if it is one `Processor`.
@@ -810,7 +817,7 @@ class MergedProcessor(Processor):
                 i = f(i)
             return i
 
-        # In the case of a nested MergedProcessor, each processor wants to
+        # In the case of a nested _MergedProcessor, each processor wants to
         # receive a 'source_to_display' function (as part of the
         # TransformationInput) that has everything in the chain before
         # included, because it can be called as part of the

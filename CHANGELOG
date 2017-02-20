@@ -15,6 +15,15 @@ that use `prompt_toolkit.shortcuts` for simple prompts, there are fewer
 incompatibilities.
 
 Changes:
+
+- No automatic translation from \r into \n during the input processing. These
+  are two different keys that can be handled independently. This is a big
+  backward-incompatibility, because the `Enter` key is `ControlM`, not
+  `ControlJ`. So, now that we stopped translating \r into \n, it could be that
+  custom key bindings for `Enter` don't work anymore. Make sure to use
+  `Keys.Enter` instead of `Keys.ControlJ` in the key bindings for handling the
+  `Enter` key.
+
 - The `CommandLineInterface` and the `Application` classes are merged. First,
   `CommandLineInterface` contained all the I/O objects (like the input, output
   and event loop), while the `Application` contained everything else. There was
@@ -25,7 +34,8 @@ Changes:
   `CommandLineInterface`, will now receive an `Application`. Usually, where we
   had an attribute `cli`, we'll now have an attribute `app`.
 
-  `CLIFilter` will now take an `Application`, so it was renamed to `AppFilter`.
+  * `CLIFilter` will now take an `Application`, so it was renamed to `AppFilter`.
+  * `to_cli_filter` was renamed to `to_app_filter`.
 
 - The `buffers` dictionary (`CommandLineInterface.buffers`) does not exist
   anymore. Further, `buffers` was a `BufferMapping` that keeps track of which
@@ -51,12 +61,38 @@ Changes:
   * `key_binding.defaults.load_key_bindings` was added to load all the key
     bindings.
   * `KeyBindingManager` has been removed completely.
+  * `input_processor` was renamed to `key_processor`.
 
-Changes in the layout engine:
+- User controls can define key bindings, which are active when the user control
+  is focussed.
+
+  * `UIControl` got a `get_key_bindings` (abstract) method.
+
+- Changes in the layout engine:
 
   * `LayoutDimension` was renamed to `Dimension`.
+  * `VSplit` and `HSplit` now take a `padding` argument.
+  * `VSplit` and `HSplit` now take an `align` argument.
+    (TOP/CENTER/BOTTOM/JUSTIFY) or (LEFT/CENTER/RIGHT/JUSTIFY).
+  * `Float` now takes `allow_cover_cursor` and `attach_to_window` arguments.
+  * `Window` got an `Align` argument. This can be used for the alignment of the
+    content. `TokenListControl` does not have an allignment argument anymore.
+  * `Window` got a `token` and `get_token` argument. This is used to fill the
+    window's background using the given `Token`. That way, a window can for
+    instance be given a background color.
+  * `FillControl` does not exist anymore. Use the `token` and `char` arguments
+    of the `Window` class instead.
+  * `DummyControl` was added.
+  * `VSplit` and `HSplit` classes also take a `token` as argument, these are
+    passed to the `Window` class and applied to the content as well.
 
-Changes related to `shortcuts.prompt`:
+- Changes to `BufferControl`:
+
+  * `BufferControl` now takes a `input_processor` as argument. (Singular
+    instead of plural). If you want to combine multiple, they have to be merged
+    together using `merge_input_processors`.
+
+- Changes related to `shortcuts.prompt`:
 
   * There is now a class `Prompt` that which has a method `prompt`. Both the
     class and the method take about the same arguments. This can be used to
@@ -70,7 +106,53 @@ Changes related to `shortcuts.prompt`:
   * The `prompt` function now takes an `extra_key_bindings` argument instead of
     `key_bindings_registry`. This should only contain the additional bindings.
 
+- Changes to the event loops:
+
+  * The event loop API is now closer to how asyncio works. A prompt_toolkit
+    `Application` now has a `Future` object. Calling the `.start()` method
+    creates and returns that `Future`. An event loop has a `run_until_complete`
+    method that takes a future and runs the event loop until the Future is set.
+
+  * `Application` still has a method `run()` that underneath still runs the
+    event loop until the `Future` is set and returns that result.
+
+  * The asyncio adaptors (like the asyncio event loop integration) now require
+    Python 3.5.
+
+  * The `Input` and `Output` classes has some changes. (Not really important.)
+
+- Changes to the `filters` module:
+
+  * All filters have been turned into functions. For instance, `IsDone`
+    became `is_done` and `HasCompletions` became `has_completions`.
+
+    This was done because almost all classes were called without any arguments
+    in the `__init__` causing additional braces everywhere. This means that
+    `HasCompletions()` has to be replaced by `has_completions` (without
+    parenthesis).
+
+    The few filters that took arguments as input, are also functions, but still
+    have to be called with the given arguments.
+
+- Other renames:
+
+  * `IncrementalSearchDirection` was renamed to `SearchDirection`.
+
+- Other new featers:
+
+  * `DummyAutoSuggest` and `DynamicAutoSuggest` were added.
+  * `DummyClipboard` and `DynamicClipboard` were added.
+  * `DummyCompleter` and `DynamicCompleter` were added.
+  * `DummyHistory` and `DynamicHistory` was added.
+
+  * `to_container` and `to_window` utilities were added.
+
+
+****
 - `run_sub_applications` returns a future instead of taking a callback.
+
+
+
 
 - Deprecated 
 

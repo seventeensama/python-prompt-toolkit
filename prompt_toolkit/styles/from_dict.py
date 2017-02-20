@@ -166,6 +166,9 @@ class _StyleFromDict(Style):
                     get_combos(smaller_parent)
         get_combos(parts)
 
+        # Include default style.
+        combos.append( () )
+
         # Order them according to their importance. More precise matches have
         # higher priority.
         def flattened_len(items):

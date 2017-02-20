@@ -184,7 +184,7 @@ class KeyBindings(KeyBindingsBase):
                 return func
         return decorator
 
-    def remove_binding(self, function):
+    def remove(self, function):
         """
         Remove a key binding.
 
@@ -202,6 +202,10 @@ class KeyBindings(KeyBindingsBase):
 
         # No key binding found for this function. Raise ValueError.
         raise ValueError('Binding not found: %r' % (function, ))
+
+    # For backwards-compatibility.
+    add_binding = add
+    remove_binding = remove
 
     def get_bindings_for_keys(self, keys):
         """

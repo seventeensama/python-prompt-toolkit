@@ -10,6 +10,10 @@ rewrite of how user controls are focussed, a rewrite of how event loops work
 and the removal of the buffers dictionary. This introduces many backwards
 incompatible changes, but the result is a very nice and powerful architecture.
 
+Most architectural changes effect full screen applications. For applications
+that use `prompt_toolkit.shortcuts` for simple prompts, there are fewer
+incompatibilities.
+
 Changes:
 - The `CommandLineInterface` and the `Application` classes are merged. First,
   `CommandLineInterface` contained all the I/O objects (like the input, output
@@ -18,14 +22,15 @@ Changes:
   mostly a proxy to `Application`.)
 
   A consequence is that all almost code which received a
-  `CommandLineInterface`, will now receive an `Application`.
-  For instance, `CLIFilter` will now take an `Application`, so it was renamed
-  to `AppFilter`.
+  `CommandLineInterface`, will now receive an `Application`. Usually, where we
+  had an attribute `cli`, we'll now have an attribute `app`.
+
+  `CLIFilter` will now take an `Application`, so it was renamed to `AppFilter`.
 
 - The `buffers` dictionary (`CommandLineInterface.buffers`) does not exist
   anymore. Further, `buffers` was a `BufferMapping` that keeps track of which
-  buffer has the focus. All this significantly reduces the freedom for creating
-  complex applications. We wanted to more toward a layout that can be defined
+  buffer has the focus. This significantly reduces the freedom for creating
+  complex applications. We wanted to move toward a layout that can be defined
   as a collection of and relation between user widgets. A user widget does not
   need to have a `Buffer` underneath and any widget should be focussable.
 
@@ -35,23 +40,42 @@ Changes:
 - The key bindings were refactored. It became much more flexible to combine
   sets of key bindings.
 
-  * Every `load_*` function returns one `Registry` objects, instead of
+  * `Registry` has been renamed to `KeyBindings`.
+  * The `add_binding` function has been renamed to simply `add`.
+  * Every `load_*` function returns one `KeyBindings` objects, instead of
     populating an existing one, like before.
-  * `MergedRegistry` and `ConditionalRegistry` were added. They can
-    respectively merge other `Registry` objects and make a set of bindings
-    optional.
+  * `ConditionalKeyBindings` was added. This can be used to enable/disable
+    all the key bindings from a given `Registry`.
+  * A function named `merge_key_bindings` was added. This takes a list of
+    `KeyBindings` and merges them into one.
   * `key_binding.defaults.load_key_bindings` was added to load all the key
     bindings.
-  * `KeyBindingManager` has been removed.
+  * `KeyBindingManager` has been removed completely.
 
+Changes in the layout engine:
+
+  * `LayoutDimension` was renamed to `Dimension`.
+
+Changes related to `shortcuts.prompt`:
+
+  * There is now a class `Prompt` that which has a method `prompt`. Both the
+    class and the method take about the same arguments. This can be used to
+    create a session. Every `prompt` call of the same instance will reuse all
+    the arguments given to the class itself. This can be used for instance to
+    keep the history between multiple calls.
+
+    Of course, it's still possible to call the global `prompt` function. This
+    will create a new instance every time when it's called.
+
+  * The `prompt` function now takes an `extra_key_bindings` argument instead of
+    `key_bindings_registry`. This should only contain the additional bindings.
 
 - `run_sub_applications` returns a future instead of taking a callback.
 
 - Deprecated 
 
-Migrating readline applications:
 
-LayoutDimension became Dimension.
+Migrating readline applications:
 
 TODO: finish changelog...
 - Removed AcceptAction, AbortAction

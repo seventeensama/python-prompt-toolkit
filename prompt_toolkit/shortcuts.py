@@ -694,6 +694,8 @@ class Prompt(object):
 
 
 def prompt(*a, **kw):
+    """ The global `prompt` function. This will create a new `Prompt` instance
+    for every call.  """
     prompt = Prompt()
     try:
         return prompt.prompt(*a, **kw)

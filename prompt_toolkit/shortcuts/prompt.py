@@ -26,38 +26,37 @@ Example::
 """
 from __future__ import unicode_literals
 
-from .auto_suggest import DynamicAutoSuggest
-from .buffer import Buffer
-from .clipboard import DynamicClipboard, InMemoryClipboard
-from .completion import DynamicCompleter
-from .document import Document
-from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
-from .eventloop.base import EventLoop
-from .eventloop.defaults import create_event_loop #, create_asyncio_event_loop
-from .filters import is_done, has_focus, RendererHeightIsKnown, to_simple_filter, Condition
-from .history import InMemoryHistory, DynamicHistory
-from .input.defaults import create_input
-from .application import Application
-from .key_binding.defaults import load_key_bindings
-from .key_binding.key_bindings import KeyBindings, DynamicKeyBindings, merge_key_bindings, ConditionalKeyBindings, KeyBindingsBase
-from .keys import Keys
-from .layout import Window, HSplit, FloatContainer, Float
-from .layout.containers import ConditionalContainer, Align
-from .layout.controls import BufferControl, TokenListControl
-from .layout.dimension import Dimension
-from .layout.layout import Layout
-from .layout.lexers import DynamicLexer
-from .layout.margins import PromptMargin, ConditionalMargin
-from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from .layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
-from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
-from .layout.utils import explode_tokens
-from .output.defaults import create_output
-from .renderer import print_tokens as renderer_print_tokens
-from .styles import DEFAULT_STYLE, Style, DynamicStyle
-from .token import Token
-from .utils import DummyContext
-from .validation import DynamicValidator
+from prompt_toolkit.auto_suggest import DynamicAutoSuggest
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.clipboard import DynamicClipboard, InMemoryClipboard
+from prompt_toolkit.completion import DynamicCompleter
+from prompt_toolkit.document import Document
+from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
+from prompt_toolkit.eventloop.base import EventLoop
+from prompt_toolkit.eventloop.defaults import create_event_loop #, create_asyncio_event_loop
+from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_simple_filter, Condition
+from prompt_toolkit.history import InMemoryHistory, DynamicHistory
+from prompt_toolkit.input.defaults import create_input
+from prompt_toolkit.application import Application
+from prompt_toolkit.key_binding.defaults import load_key_bindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings, DynamicKeyBindings, merge_key_bindings, ConditionalKeyBindings, KeyBindingsBase
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
+from prompt_toolkit.layout.containers import ConditionalContainer, Align
+from prompt_toolkit.layout.controls import BufferControl, TokenListControl
+from prompt_toolkit.layout.dimension import Dimension
+from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.lexers import DynamicLexer
+from prompt_toolkit.layout.margins import PromptMargin, ConditionalMargin
+from prompt_toolkit.layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
+from prompt_toolkit.layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
+from prompt_toolkit.layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
+from prompt_toolkit.layout.utils import explode_tokens
+from prompt_toolkit.output.defaults import create_output
+from prompt_toolkit.styles import DEFAULT_STYLE, Style, DynamicStyle
+from prompt_toolkit.token import Token
+from prompt_toolkit.utils import DummyContext
+from prompt_toolkit.validation import DynamicValidator
 
 from six import text_type, exec_
 
@@ -71,8 +70,6 @@ __all__ = (
     'prompt',
     'prompt_async',
     'confirm',
-    'print_tokens',
-    'clear',
 )
 
 
@@ -725,7 +722,7 @@ except SyntaxError:
             'prompt_async is only available for Python >3.5.')
 
 
-def create_confirm_prompt(message, loop=None):
+def _create_confirm_prompt(message, loop=None):
     """
     Create a `Prompt` object for the 'confirm' function.
     """
@@ -755,46 +752,8 @@ def confirm(message='Confirm (y or n) '):
     """
     Display a confirmation prompt that returns True/False.
     """
-    p = create_confirm_prompt(message)
+    p = _create_confirm_prompt(message)
     try:
         return p.prompt()
     finally:
         p.close()
-
-
-def print_tokens(tokens, style=None, true_color=False, file=None):
-    """
-    Print a list of (Token, text) tuples in the given style to the output.
-    E.g.::
-
-        style = style_from_dict({
-            Token.Hello: '#ff0066',
-            Token.World: '#884444 italic',
-        })
-        tokens = [
-            (Token.Hello, 'Hello'),
-            (Token.World, 'World'),
-        ]
-        print_tokens(tokens, style=style)
-
-    :param tokens: List of ``(Token, text)`` tuples.
-    :param style: :class:`.Style` instance for the color scheme.
-    :param true_color: When True, use 24bit colors instead of 256 colors.
-    :param file: The output file. This can be `sys.stdout` or `sys.stderr`.
-    """
-    if style is None:
-        style = DEFAULT_STYLE
-    assert isinstance(style, Style)
-
-    output = create_output(true_color=true_color, stdout=file)
-    renderer_print_tokens(output, tokens, style)
-
-
-def clear():
-    """
-    Clear the screen.
-    """
-    out = create_output()
-    out.erase_screen()
-    out.cursor_goto(0, 0)
-    out.flush()

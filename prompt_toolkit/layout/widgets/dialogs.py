@@ -116,7 +116,8 @@ class YesNoDialog(object):
     """
     A dialog window with "Yes" and "No" buttons.
     """
-    def __init__(self, title='', text='', yes_handler=None, no_handler=None, loop=None):
+    def __init__(self, title='', text='', yes_handler=None, no_handler=None,
+                 yes_text='Yes', no_text='No', loop=None):
         assert isinstance(title, six.text_type)
         assert isinstance(text, six.text_type)
         assert yes_handler is None or callable(yes_handler)
@@ -130,8 +131,8 @@ class YesNoDialog(object):
             title=title,
             body=Box(body=Label(loop=loop, text=text)),
             buttons=[
-                Button(loop=loop, text='Yes', handler=yes_handler),
-                Button(loop=loop, text='no', handler=no_handler),
+                Button(loop=loop, text=yes_text, handler=yes_handler),
+                Button(loop=loop, text=no_text, handler=no_handler),
             ])
 
     def __pt_container__(self):

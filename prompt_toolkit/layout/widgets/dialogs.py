@@ -57,7 +57,8 @@ class InputDialog(object):
     A dialog window with one text input field.
     """
     def __init__(self, title='', text='', password=False, completer=None,
-                 ok_handler=None, cancel_handler=None, loop=None):
+                 ok_handler=None, cancel_handler=None, ok_text='Ok',
+                 cancel_text='Cancel', loop=None):
         assert isinstance(title, six.text_type)
         assert isinstance(text, six.text_type)
         assert ok_handler is None or callable(ok_handler)
@@ -80,8 +81,8 @@ class InputDialog(object):
                 self.textfield,
             ]),
             buttons=[
-                Button(loop=loop, text='Ok', handler=ok_handler),
-                Button(loop=loop, text='Cancel', handler=cancel_handler),
+                Button(loop=loop, text=ok_text, handler=ok_handler),
+                Button(loop=loop, text=cancel_text, handler=cancel_handler),
             ])
 
     def __pt_container__(self):

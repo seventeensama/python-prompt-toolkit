@@ -5,7 +5,7 @@ from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.widgets import YesNoDialog
+from prompt_toolkit.layout.widgets import YesNoDialog, InputDialog
 
 __all__ = (
     'yes_no_dialog',
@@ -24,12 +24,49 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No'):
         app.set_return_value(False)
 
     dialog = YesNoDialog(
-        title='Example dialog window',
-        text='Do you want to confirm?',
+        title=title,
+        text=text,
         yes_handler=yes_handler,
         no_handler=no_handler,
         yes_text=yes_text,
         no_text=no_text)
+
+    # Key bindings.
+    bindings = KeyBindings()
+    bindings.add(Keys.Tab)(focus_next)
+    bindings.add(Keys.BackTab)(focus_previous)
+
+    application = Application(
+        layout=Layout(dialog),
+        key_bindings=merge_key_bindings([
+            load_key_bindings(),
+            bindings,
+        ]),
+        mouse_support=True,
+        use_alternate_screen=True)
+
+    # Run event loop.
+    return application.run()
+
+
+def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel'):
+    """
+    Display a text input box.
+    Return the given text, or None when cancelled.
+    """
+    def cancel_handler(app):
+        app.set_return_value(None)
+
+    def ok_handler(app):
+        app.set_return_value(dialog.textfield.text)
+
+    dialog = InputDialog(
+        title=title,
+        text=text,
+        ok_handler=ok_handler,
+        cancel_handler=cancel_handler,
+        ok_text=ok_text,
+        cancel_text=cancel_text)
 
     # Key bindings.
     bindings = KeyBindings()

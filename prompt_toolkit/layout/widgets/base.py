@@ -82,6 +82,10 @@ class TextArea(object):
             token=Token.TextArea,
             wrap_lines=True)
 
+    @property
+    def text(self):
+        return self.buffer.text
+
     def __pt_container__(self):
         return self.window
 

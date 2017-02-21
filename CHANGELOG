@@ -92,6 +92,12 @@ Changes:
     instead of plural). If you want to combine multiple, they have to be merged
     together using `merge_input_processors`.
 
+  * The `InputProcessor` class has been refactored. The `apply_transformation`
+    method should now accept a `TransformationInput` object.
+
+  * The text `(reverse-i-search)` is now displayed through a processor. (See
+    the `shortcuts` module for an example of the usage.)
+
 - Changes related to `shortcuts.prompt`:
 
   * There is now a class `Prompt` that which has a method `prompt`. Both the
@@ -147,6 +153,8 @@ Changes:
 
   * `to_container` and `to_window` utilities were added.
 
+  * Added a small collection of widgets. These are more complex collections of
+    user controls that are ready to embed in a layout.
 
 ****
 - `run_sub_applications` returns a future instead of taking a callback.

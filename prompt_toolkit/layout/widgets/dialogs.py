@@ -62,8 +62,8 @@ class InputDialog(object):
                 self.textfield,
             ]),
             buttons=[
-                Button('Ok', handler=ok_handler),
-                Button('Cancel', handler=cancel_handler),
+                Button(loop=loop, text='Ok', handler=ok_handler),
+                Button(loop=loop, text='Cancel', handler=cancel_handler),
             ])
 
     def __pt_container__(self):
@@ -77,7 +77,7 @@ class MessageDialog(object):
             title=title,
             body=Box(loop=loop, body=Label(loop=loop, text=text)),
             buttons=[
-                Button('Ok', handler=ok_handler),
+                Button(loop=loop, text='Ok', handler=ok_handler),
             ])
 
     def __pt_container__(self):
@@ -91,8 +91,8 @@ class YesNoDialog(object):
             title=title,
             body=Box(loop, body=Label(loop=loop, text=text)),
             buttons=[
-                Button('Yes', handler=yes_handler),
-                Button('no', handler=no_handler),
+                Button(loop=loop, text='Yes', handler=yes_handler),
+                Button(loop=loop, text='no', handler=no_handler),
             ])
 
     def __pt_container__(self):

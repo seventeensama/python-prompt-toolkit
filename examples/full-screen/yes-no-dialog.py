@@ -68,8 +68,8 @@ Box_ = partial(Box, loop=loop)
 ProgressBar_ = partial(ProgressBar, loop=loop)
 
 
-yes_button = Button('Yes', handler=accept_yes)
-no_button = Button('No', handler=accept_no)
+yes_button = Button_(text='Yes', handler=accept_yes)
+no_button = Button_(text='No', handler=accept_no)
 textfield  = TextArea_(lexer=PygmentsLexer(HtmlLexer))
 textfield2 = TextArea_()
 checkbox1 = Checkbox_(text='Checkbox')
@@ -177,7 +177,6 @@ bindings.add(Keys.BackTab)(focus_previous)
 
 
 style = style_from_pygments(style_dict={
-    Token.Label: '#888888 reverse',
     Token.Window.Border: '#888888',
     Token.Shadow: 'bg:#222222',
 

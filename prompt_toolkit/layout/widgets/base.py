@@ -3,10 +3,12 @@ Collection of reusable components for building full screen applications.
 """
 from __future__ import unicode_literals
 from functools import partial
+import six
 
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
 from prompt_toolkit.eventloop.base import EventLoop
+from prompt_toolkit.filters import to_app_filter
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.token import Token
@@ -15,7 +17,7 @@ from prompt_toolkit.utils import get_cwidth
 from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
 from ..controls import BufferControl, TokenListControl
 from ..dimension import Dimension as D
-from ..processors import PasswordProcessor
+from ..processors import PasswordProcessor, ConditionalProcessor
 from ..margins import ScrollbarMargin
 
 
@@ -45,38 +47,17 @@ class BORDER:
     #LIGHT_VERTICAL = '\u2501'
 
 
-class WIDE_BORDER:
-    " Box drawing characters. (Wide) "
-    HORIZONTAL = '\u2501'
-    VERTICAL = '\u2503'
-    TOP_LEFT = '\u250f'
-    TOP_RIGHT = '\u2513'
-    BOTTOM_LEFT = '\u2517'
-    BOTTOM_RIGHT = '\u251b'
-    #LIGHT_VERTICAL = '\u2502'
-
-
-class SHADE:
-    LIGHT = '\u9617'
-    MEDIUM = '\u9618'
-    DARK = '\u9619'
-
-
 class TextArea(object):
     """
     A simple input field.
 
+    :param loop: The `EventLoop` to be used.
     :param multiline: If True, allow multiline input.
     :param password: When `True`, display using asteriks.
     """
     def __init__(self, loop, multiline=True, password=False,
                  lexer=None, completer=None):
         assert isinstance(loop, EventLoop)
-
-        if password:
-            processor = PasswordProcessor()
-        else:
-            processor = None
 
         self.buffer = Buffer(
             loop=loop,
@@ -87,7 +68,10 @@ class TextArea(object):
         self.control = BufferControl(
             buffer=self.buffer,
             lexer=lexer,
-            input_processor=processor)
+            input_processor=ConditionalProcessor(
+                processor=PasswordProcessor(),
+                filter=to_app_filter(password)
+            ))
 
         height = D() if multiline else D.exact(1)
 
@@ -103,14 +87,23 @@ class TextArea(object):
 
 class Label(object):
     """
-    Widget that displays the given text.
+    Widget that displays the given text. It is not editable or focussable.
+
+    :param loop: The `EventLoop` to be used.
+    :param text: The text to be displayed. (This can be multiline.)
+    :param token: A `Token` to be used for the highlighting.
+    :param width: When given, use this width, rather than calculating it from
+        the text size.
     """
     def __init__(self, loop, text, token=None, width=None):
         assert isinstance(loop, EventLoop)
+        assert isinstance(text, six.text_type)
 
         if width is None:
             longest_line = max(get_cwidth(line) for line in text.splitlines())
             width = D.exact(longest_line)
+
+        token = Token.Label | (token or Token)
 
         self.buffer = Buffer(loop=loop, document=Document(text, 0))
         self.buffer_control = BufferControl(self.buffer, focussable=False)
@@ -122,11 +115,16 @@ class Label(object):
 
 class Button(object):
     """
+    Clickable button.
+
+    :param loop: The `EventLoop` to be used.
     :param text: The caption for the button.
     :param handler: `None` or callable. Called when the button is clicked.
     :param width: Width of the button.
     """
-    def __init__(self, text, handler=None, width=12):
+    def __init__(self, loop, text, handler=None, width=12):
+        assert isinstance(loop, EventLoop)
+        assert isinstance(text, six.text_type)
         assert handler is None or callable(handler)
         assert isinstance(width, int)
 
@@ -158,6 +156,7 @@ class Button(object):
         ]
 
     def _get_key_bindings(self):
+        " Key bindings for the Button. "
         kb = KeyBindings()
         @kb.add(' ')
         @kb.add(Keys.Enter)
@@ -175,12 +174,15 @@ class Frame(object):
     """
     Draw a border around any container.
 
+    :param loop: The `EventLoop` to be used.
     :param body: Another container object.
+    :param title: Text to be displayed in the top of the frame.
     """
     def __init__(self, loop, body, title='', token=None):
         assert isinstance(loop, EventLoop)
 
         fill = partial(Window, token=Token.Window.Border)
+        token = Token.Frame | (token or Token)
 
         if title:
             top_row = VSplit([
@@ -222,8 +224,13 @@ class Shadow(object):
     Draw a shadow underneath/behind this container.
     (This applies `Token.Shadow` the the cells under the shadow. The Style
     should define the colors for the shadow.)
+
+    :param loop: The `EventLoop` to be used.
+    :param body: Another container object.
     """
     def __init__(self, loop, body):
+        assert isinstance(loop, EventLoop)
+
         self.container = FloatContainer(
             content=body,
             floats=[
@@ -242,16 +249,26 @@ class Box(object):
     """
     Add padding around a container.
 
-    This also makes sure that the parent can reverse more space than required by
+    This also makes sure that the parent can provide more space than required by
     the child. This is very useful when wrapping a small element with a fixed
     size into a ``VSplit`` or ``HSplit`` object. The ``HSplit`` and ``VSplit``
-    tries to make sure to adapt respectively the width and height, possibly
-    shrinking other elements. Wrapping something in a ``Box``, makes it flexible.
+    try to make sure to adapt respectively the width and height, possibly
+    shrinking other elements. Wrapping something in a ``Box`` makes it flexible.
+
+    :param loop: The `EventLoop` to be used.
+    :param body: Another container object.
+    :param padding: The margin to be used around the body. This can be
+        overridden by `padding_left`, padding_right`, `padding_top` and
+        `padding_bottom`.
+    :param token: Token to be applied to this widget.
+    :param char: Character to be used for filling the space around the body.
     """
     def __init__(self, loop, body, padding=0,
                  padding_left=None, padding_right=None,
                  padding_top=None, padding_bottom=None,
                  token=None, char=None):
+        assert isinstance(loop, EventLoop)
+
         def get(value):
             return value if value is not None else padding
 
@@ -276,7 +293,9 @@ class Box(object):
 
 
 class Checkbox(object):
-    def __init__(self, loop, text):
+    def __init__(self, loop, text=''):
+        assert isinstance(loop, EventLoop)
+
         self.checked = True
 
         kb = KeyBindings()
@@ -296,7 +315,7 @@ class Checkbox(object):
         self.container = VSplit([
             self.window,
             Label(loop=loop, text=' {}'.format(text))
-        ])
+        ], token=Token.Checkbox)
 
     def _get_tokens(self, app):
         text = '*' if self.checked else ' '
@@ -308,6 +327,8 @@ class Checkbox(object):
 
 class RadioButtonList(object):
     """
+    List of radio buttons. Only one can be checked at the same time.
+
     :param values: List of (label, value) tuples.
     """
     def __init__(self, loop, values):

@@ -7,7 +7,7 @@ import six
 
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
-from prompt_toolkit.eventloop.base import EventLoop
+from prompt_toolkit.eventloop import EventLoop, get_event_loop
 from prompt_toolkit.filters import to_app_filter
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.keys import Keys
@@ -54,9 +54,11 @@ class TextArea(object):
     :param multiline: If True, allow multiline input.
     :param password: When `True`, display using asteriks.
     """
-    def __init__(self, loop, multiline=True, password=False,
-                 lexer=None, completer=None):
-        assert isinstance(loop, EventLoop)
+    def __init__(self, multiline=True, password=False,
+                 lexer=None, completer=None, loop=None):
+        assert loop is None or isinstance(loop, EventLoop)
+
+        loop = loop or get_event_loop()
 
         self.buffer = Buffer(
             loop=loop,
@@ -88,21 +90,23 @@ class Label(object):
     """
     Widget that displays the given text. It is not editable or focussable.
 
-    :param loop: The `EventLoop` to be used.
     :param text: The text to be displayed. (This can be multiline.)
     :param token: A `Token` to be used for the highlighting.
     :param width: When given, use this width, rather than calculating it from
         the text size.
+    :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, loop, text, token=None, width=None):
-        assert isinstance(loop, EventLoop)
+    def __init__(self, text, token=Token, width=None, loop=None):
         assert isinstance(text, six.text_type)
+        assert loop is None or isinstance(loop, EventLoop)
+
+        loop = loop or get_event_loop()
 
         if width is None:
             longest_line = max(get_cwidth(line) for line in text.splitlines())
             width = D.exact(longest_line)
 
-        token = Token.Label | (token or Token)
+        token = Token.Label | token
 
         self.buffer = Buffer(loop=loop, document=Document(text, 0))
         self.buffer_control = BufferControl(self.buffer, focussable=False)
@@ -116,16 +120,16 @@ class Button(object):
     """
     Clickable button.
 
-    :param loop: The `EventLoop` to be used.
     :param text: The caption for the button.
     :param handler: `None` or callable. Called when the button is clicked.
     :param width: Width of the button.
+    :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, loop, text, handler=None, width=12):
-        assert isinstance(loop, EventLoop)
+    def __init__(self, text, handler=None, width=12, loop=None):
         assert isinstance(text, six.text_type)
         assert handler is None or callable(handler)
         assert isinstance(width, int)
+        assert loop is None or isinstance(loop, EventLoop)
 
         self.text = text
         self.handler = handler
@@ -174,12 +178,14 @@ class Frame(object):
     """
     Draw a border around any container.
 
-    :param loop: The `EventLoop` to be used.
     :param body: Another container object.
     :param title: Text to be displayed in the top of the frame.
+    :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, loop, body, title='', token=None):
-        assert isinstance(loop, EventLoop)
+    def __init__(self, body, title='', token=None, loop=None):
+        assert loop is None or isinstance(loop, EventLoop)
+
+        loop = loop or get_event_loop()
 
         fill = partial(Window, token=Token.Window.Border)
         token = Token.Frame | (token or Token)
@@ -189,7 +195,7 @@ class Frame(object):
                 fill(width=1, height=1, char=BORDER.TOP_LEFT),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char='|'),
-                Label(loop, ' {} '.format(title), token=Token.Frame.Label),
+                Label(' {} '.format(title), token=Token.Frame.Label, loop=loop),
                 fill(width=1, height=1, char='|'),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char=BORDER.TOP_RIGHT),
@@ -225,12 +231,9 @@ class Shadow(object):
     (This applies `Token.Shadow` the the cells under the shadow. The Style
     should define the colors for the shadow.)
 
-    :param loop: The `EventLoop` to be used.
     :param body: Another container object.
     """
-    def __init__(self, loop, body):
-        assert isinstance(loop, EventLoop)
-
+    def __init__(self, body):
         self.container = FloatContainer(
             content=body,
             floats=[
@@ -255,7 +258,6 @@ class Box(object):
     try to make sure to adapt respectively the width and height, possibly
     shrinking other elements. Wrapping something in a ``Box`` makes it flexible.
 
-    :param loop: The `EventLoop` to be used.
     :param body: Another container object.
     :param padding: The margin to be used around the body. This can be
         overridden by `padding_left`, padding_right`, `padding_top` and
@@ -263,11 +265,10 @@ class Box(object):
     :param token: Token to be applied to this widget.
     :param char: Character to be used for filling the space around the body.
     """
-    def __init__(self, loop, body, padding=0,
+    def __init__(self, body, padding=0,
                  padding_left=None, padding_right=None,
                  padding_top=None, padding_bottom=None,
                  token=None, char=None):
-        assert isinstance(loop, EventLoop)
 
         def get(value):
             return value if value is not None else padding
@@ -293,8 +294,10 @@ class Box(object):
 
 
 class Checkbox(object):
-    def __init__(self, loop, text=''):
-        assert isinstance(loop, EventLoop)
+    def __init__(self, text='', loop=None):
+        assert loop is None or isinstance(loop, EventLoop)
+
+        loop = loop or get_event_loop()
 
         self.checked = True
 

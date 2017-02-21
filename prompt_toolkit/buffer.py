@@ -10,7 +10,7 @@ from .clipboard import ClipboardData
 from .completion import CompleteEvent, get_common_complete_suffix, Completer, Completion, DummyCompleter
 from .document import Document
 from .enums import SearchDirection
-from .eventloop.base import EventLoop
+from .eventloop import EventLoop, get_event_loop
 from .filters import to_simple_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
@@ -176,7 +176,7 @@ class Buffer(object):
         multiline = to_simple_filter(multiline)
 
         # Validate input.
-        assert isinstance(loop, EventLoop)
+        assert loop is None or isinstance(loop, EventLoop)
         assert completer is None or isinstance(completer, Completer)
         assert auto_suggest is None or isinstance(auto_suggest, AutoSuggest)
         assert history is None or isinstance(history, History)
@@ -192,7 +192,7 @@ class Buffer(object):
         assert on_suggestion_set is None or callable(on_suggestion_set)
         assert document is None or isinstance(document, Document)
 
-        self.loop = loop
+        self.loop = loop or get_event_loop()
         self.completer = completer or DummyCompleter()
         self.auto_suggest = auto_suggest
         self.validator = validator
@@ -1414,7 +1414,8 @@ class Buffer(object):
                 if self.loop:
                     self.loop.call_from_executor(callback)
 
-            self.loop.run_in_executor(run)
+            if self.loop:
+                self.loop.run_in_executor(run)
         return async_completer
 
     def _create_auto_suggest_function(self):
@@ -1458,7 +1459,8 @@ class Buffer(object):
                 if self.loop:
                     self.loop.call_from_executor(callback)
 
-            self.loop.run_in_executor(run)
+            if self.loop:
+                self.loop.run_in_executor(run)
         return async_suggestor
 
     def validate_and_handle(self, app):

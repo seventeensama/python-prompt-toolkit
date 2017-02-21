@@ -3,10 +3,9 @@
 """
 from __future__ import unicode_literals
 
-from functools import partial
 from prompt_toolkit.application import Application
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.eventloop.defaults import create_event_loop
+from prompt_toolkit.eventloop import create_event_loop, set_event_loop, get_event_loop
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
@@ -23,10 +22,13 @@ from pygments.lexers import HtmlLexer
 
 
 loop = create_event_loop()
+set_event_loop(loop)
 
 
 class ProgressBar(object):
-    def __init__(self, loop):
+    def __init__(self, loop=None):
+        loop = loop or get_event_loop()
+
         self.container = FloatContainer(
             content=Window(height=1),
             floats=[
@@ -34,7 +36,7 @@ class ProgressBar(object):
                 # now, this is the only way to have the colors of the progress
                 # bar appear on to of the label. The problem is that our label
                 # can't be part of any `Window` below.
-                Float(content=Label(loop, '60%'), top=0, bottom=0),
+                Float(content=Label('60%'), top=0, bottom=0),
 
                 Float(left=0, top=0, right=0, bottom=0, content=VSplit([
                     Window(token=Token.ProgressBar.Used, width=D(weight=60)),
@@ -59,21 +61,13 @@ def do_exit(app):
 
 
 # Make partials that pass the loop everywhere.
-Frame_ = partial(Frame, loop=loop)
-Button_ = partial(Button, loop=loop)
-Label_ = partial(Label, loop=loop)
-TextArea_ = partial(TextArea, loop=loop)
-Checkbox_ = partial(Checkbox, loop=loop)
-Box_ = partial(Box, loop=loop)
-ProgressBar_ = partial(ProgressBar, loop=loop)
 
-
-yes_button = Button_(text='Yes', handler=accept_yes)
-no_button = Button_(text='No', handler=accept_no)
-textfield  = TextArea_(lexer=PygmentsLexer(HtmlLexer))
-textfield2 = TextArea_()
-checkbox1 = Checkbox_(text='Checkbox')
-checkbox2 = Checkbox_(text='Checkbox')
+yes_button = Button(text='Yes', handler=accept_yes)
+no_button = Button(text='No', handler=accept_no)
+textfield  = TextArea(lexer=PygmentsLexer(HtmlLexer))
+textfield2 = TextArea()
+checkbox1 = Checkbox(text='Checkbox')
+checkbox2 = Checkbox(text='Checkbox')
 
 radios = RadioButtonList(loop=loop, values=[
     ('Red', 'red'),
@@ -94,26 +88,26 @@ animal_completer = WordCompleter([
 
 root_container = HSplit([
     VSplit([
-        Frame_(body=Label_(text='Left frame\ncontent')),
+        Frame(body=Label(text='Left frame\ncontent')),
         InputDialog(
-            loop, 'The custom window', 'This is the\nwindow content',
+            'The custom window', 'This is the\nwindow content',
             password=True, completer=animal_completer),
-        MessageDialog(loop, 'The custom window',
+        MessageDialog('The custom window',
                       'this is\nthe other window.\nTest')
     ]),
     VSplit([
-        Frame_(body=HSplit([
+        Frame(body=HSplit([
             textfield,
-            ProgressBar_(),
+            ProgressBar(),
         ])),
         #VerticalLine(),
-        Frame_(body=HSplit([
+        Frame(body=HSplit([
             checkbox1,
             checkbox2,
         ], align='TOP')),
-        Frame_(body=radios),
+        Frame(body=radios),
     ], padding=1),
-    Box_(
+    Box(
         body=VSplit([
             yes_button,
             no_button,

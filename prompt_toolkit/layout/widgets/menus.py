@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from .base import BORDER
 
+from prompt_toolkit.eventloop import EventLoop
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.keys import Keys
@@ -21,12 +22,12 @@ class MenuContainer(object):
     """
     :param floats: List of extra Float objects to display.
     """
-    def __init__(self, loop, body, menu_items=None, floats=None):
+    def __init__(self, body, menu_items=None, floats=None, loop=None):
         assert isinstance(menu_items, list) and \
             all(isinstance(i, MenuItem) for i in menu_items)
         assert floats is None or all(isinstance(f, Float) for f in floats)
+        assert loop is None or isinstance(loop, EventLoop)
 
-        self.loop = loop
         self.body = body
         self.menu_items = menu_items
         self.selected_menu = [0]
@@ -127,19 +128,19 @@ class MenuContainer(object):
             floats=[
                 Float(xcursor=self.window, ycursor=self.window,
                       content=ConditionalContainer(
-                          content=Shadow(self.loop, body=submenu),
+                          content=Shadow(body=submenu),
                           filter=has_focus)),
                 Float(attach_to_window=submenu,
                       xcursor=True, ycursor=True,
                       allow_cover_cursor=True,
                       content=ConditionalContainer(
-                          content=Shadow(self.loop, body=submenu2),
+                          content=Shadow(body=submenu2),
                           filter=has_focus & Condition(lambda app: len(self.selected_menu) >= 1))),
                 Float(attach_to_window=submenu2,
                       xcursor=True, ycursor=True,
                       allow_cover_cursor=True,
                       content=ConditionalContainer(
-                          content=Shadow(self.loop, body=submenu3),
+                          content=Shadow(body=submenu3),
                           filter=has_focus & Condition(lambda app: len(self.selected_menu) >= 2))),
 
                 # --

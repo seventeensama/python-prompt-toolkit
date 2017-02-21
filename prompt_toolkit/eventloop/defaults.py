@@ -1,9 +1,12 @@
 from __future__ import unicode_literals
 from prompt_toolkit.utils import is_windows
+from .base import EventLoop
 
 __all__ = (
     'create_event_loop',
     'create_asyncio_event_loop',
+    'get_event_loop',
+    'set_event_loop',
 )
 
 
@@ -37,3 +40,30 @@ def create_asyncio_event_loop(loop=None):
         from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
 
     return AsyncioEventLoop(loop)
+
+
+_loop = None
+
+
+def get_event_loop():
+    """
+    Return the current event loop.
+    This has to be called after setting an event loop, using `set_event_loop`.
+    (Unline Asyncio, we don't set a default loop.)
+    """
+    if _loop:
+        return _loop
+    else:
+        raise ValueError('No event loop has been set.')
+
+
+def set_event_loop(loop):
+    """
+    Set the current event loop.
+
+    :param loop: `EventLoop` instance or None. (Pass `None` to clear the
+        current loop.)
+    """
+    assert loop is None or isinstance(loop, EventLoop)
+    global _loop
+    _loop = loop

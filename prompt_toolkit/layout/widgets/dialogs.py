@@ -2,6 +2,8 @@
 Collection of reusable components for building full screen applications.
 """
 from __future__ import unicode_literals
+import six
+from prompt_toolkit.eventloop.base import EventLoop
 from prompt_toolkit.token import Token
 from .base import Box, Shadow, Button, Label, TextArea, Frame
 from ..containers import VSplit, HSplit
@@ -15,7 +17,18 @@ __all__ = (
 
 
 class Dialog(object):
+    """
+    Simple dialog window. This is the base for `InputDialog`, `MessageDialog`
+    and `YesNoDialog`.
+
+    :param loop: The `EventLoop` to be used.
+    :param title: Text to be displayed at the top of the dialog.
+    :param body: Another container object.
+    :param buttons: A list of `Button` widgets, displayed at the bottom.
+    """
     def __init__(self, loop, title, body, buttons):
+        assert isinstance(loop, EventLoop)
+        assert isinstance(title, six.text_type)
         assert isinstance(buttons, list)
 
         self.container = Box(
@@ -44,8 +57,17 @@ class Dialog(object):
 
 
 class InputDialog(object):
+    """
+    A dialog window with one text input field.
+    """
     def __init__(self, loop, title='', text='', password=False,
                  completer=None, ok_handler=None, cancel_handler=None):
+        assert isinstance(loop, EventLoop)
+        assert isinstance(title, six.text_type)
+        assert isinstance(text, six.text_type)
+        assert ok_handler is None or callable(ok_handler)
+        assert cancel_handler is None or callable(cancel_handler)
+
         self.textfield = TextArea(
             loop=loop,
             multiline=False,
@@ -57,8 +79,7 @@ class InputDialog(object):
             title=title,
             body=HSplit([
                 Box(loop=loop,
-                    body=Label(loop=loop, text=text)
-                ),
+                    body=Label(loop=loop, text=text)),
                 self.textfield,
             ]),
             buttons=[
@@ -71,7 +92,15 @@ class InputDialog(object):
 
 
 class MessageDialog(object):
+    """
+    A dialog window that displays a message.
+    """
     def __init__(self, loop, title='', text='', ok_handler=None):
+        assert isinstance(loop, EventLoop)
+        assert isinstance(title, six.text_type)
+        assert isinstance(text, six.text_type)
+        assert ok_handler is None or callable(ok_handler)
+
         self.dialog = Dialog(
             loop=loop,
             title=title,
@@ -85,7 +114,16 @@ class MessageDialog(object):
 
 
 class YesNoDialog(object):
+    """
+    A dialog window with "Yes" and "No" buttons.
+    """
     def __init__(self, loop, title='', text='', yes_handler=None, no_handler=None):
+        assert isinstance(loop, EventLoop)
+        assert isinstance(title, six.text_type)
+        assert isinstance(text, six.text_type)
+        assert yes_handler is None or callable(yes_handler)
+        assert no_handler is None or callable(no_handler)
+
         self.dialog = Dialog(
             loop=loop,
             title=title,

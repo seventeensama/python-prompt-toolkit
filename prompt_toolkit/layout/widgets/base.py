@@ -44,7 +44,6 @@ class BORDER:
     TOP_RIGHT = '\u2510'
     BOTTOM_LEFT = '\u2514'
     BOTTOM_RIGHT = '\u2518'
-    #LIGHT_VERTICAL = '\u2501'
 
 
 class TextArea(object):
@@ -158,6 +157,7 @@ class Button(object):
     def _get_key_bindings(self):
         " Key bindings for the Button. "
         kb = KeyBindings()
+
         @kb.add(' ')
         @kb.add(Keys.Enter)
         def _(event):
@@ -235,9 +235,9 @@ class Shadow(object):
             content=body,
             floats=[
                 Float(bottom=-1, height=1, left=1, right=-1,
-                    content=Window(token=Token.Shadow)),
+                      content=Window(token=Token.Shadow)),
                 Float(bottom=-1, top=1, width=1, right=-1,
-                    content=Window(token=Token.Shadow)),
+                      content=Window(token=Token.Shadow)),
                 ]
             )
 
@@ -343,6 +343,7 @@ class RadioButtonList(object):
 
         # Key bindings.
         kb = KeyBindings()
+
         @kb.add(Keys.Up)
         def _(event):
             self._selected_index = max(0, self._selected_index - 1)

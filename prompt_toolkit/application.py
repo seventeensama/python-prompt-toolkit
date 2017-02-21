@@ -4,7 +4,7 @@ from .buffer import Buffer
 from .cache import SimpleCache
 from .clipboard import Clipboard, InMemoryClipboard
 from .enums import EditingMode
-from .eventloop.base import EventLoop
+from .eventloop import EventLoop, get_event_loop
 from .eventloop.future import Future
 from .filters import AppFilter, to_app_filter
 from .filters import Condition
@@ -122,7 +122,7 @@ class Application(object):
         assert on_render is None or callable(on_render)
         assert on_invalidate is None or callable(on_invalidate)
 
-        assert isinstance(loop, EventLoop), 'Passing an eventloop is required.'
+        assert loop is None or isinstance(loop, EventLoop)
         assert output is None or isinstance(output, Output)
         assert input is None or isinstance(input, Input)
 
@@ -153,7 +153,7 @@ class Application(object):
         self.on_reset = Event(self, on_reset)
 
         # I/O.
-        self.loop = loop
+        self.loop = loop or get_event_loop()
         self.output = output or create_output()
         self.input = input or create_input(sys.stdin)
 

@@ -43,6 +43,7 @@ def create_asyncio_event_loop(loop=None):
 
 
 _loop = None
+_loop_has_been_set = False
 
 
 def get_event_loop():
@@ -51,10 +52,18 @@ def get_event_loop():
     This has to be called after setting an event loop, using `set_event_loop`.
     (Unline Asyncio, we don't set a default loop.)
     """
-    if _loop:
+    global _loop, _loop_has_been_set
+
+    # When this function is called for the first time, and no loop has been
+    # set. Create one.
+    if _loop is None and not _loop_has_been_set:
+        _loop = create_event_loop()
+        _loop_has_been_set = True
+
+    if _loop is not None:
         return _loop
     else:
-        raise ValueError('No event loop has been set.')
+        raise ValueError('The event loop has been cleared. Passing the explicitely is required.')
 
 
 def set_event_loop(loop):
@@ -65,5 +74,7 @@ def set_event_loop(loop):
         current loop.)
     """
     assert loop is None or isinstance(loop, EventLoop)
-    global _loop
+    global _loop, _loop_has_been_set
+
     _loop = loop
+    _loop_has_been_set = True

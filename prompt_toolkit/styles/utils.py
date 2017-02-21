@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from .base import DEFAULT_ATTRS, Attrs
+from .base import Attrs
 
 __all__ = (
     'split_token_in_parts',
@@ -24,7 +24,8 @@ def split_token_in_parts(token):
         else:
             current.append(part)
 
-    return tuple(sorted(result))
+    # Remove empty items, duplicates and return sorted as a tuple.
+    return tuple(sorted(set(filter(None, result))))
 
 
 def merge_attrs(list_of_attrs):

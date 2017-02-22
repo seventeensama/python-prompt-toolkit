@@ -150,17 +150,18 @@ class _StyleFromDict(Style):
     def get_attrs_for_token(self, token):
         # Split Token.
         parts = split_token_in_parts(token)
-        parts = tuple(sorted(parts, reverse=True))
+        parts = tuple(sorted(parts))
 
         # Find all tokens combinations that represent a parent of this token.
         combos = []
         def get_combos(combo):
-            combos.append(tuple(sorted(combo)))
+            combos.append(combo)
 
             # Find smaller (parent) combinations.
             for i, part in enumerate(combo):
                 smaller_parent = combo[:i] + (part[:-1], ) + combo[i + 1:]
                 smaller_parent = filter(None, smaller_parent)
+                smaller_parent = tuple(sorted(smaller_parent))
                 if smaller_parent:
                     get_combos(smaller_parent)
         get_combos(parts)

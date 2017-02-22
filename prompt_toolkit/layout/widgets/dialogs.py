@@ -67,11 +67,18 @@ class InputDialog(object):
 
         loop = loop or get_event_loop()
 
+        ok_button = Button(loop=loop, text=ok_text, handler=ok_handler)
+        cancel_button = Button(loop=loop, text=cancel_text, handler=cancel_handler)
+
+        def accept(app):
+            app.layout.focus(ok_button)
+
         self.textfield = TextArea(
             loop=loop,
             multiline=False,
             password=password,
-            completer=completer)
+            completer=completer,
+            accept_handler=accept)
 
         self.dialog = Dialog(
             loop=loop,
@@ -80,10 +87,7 @@ class InputDialog(object):
                 Box(body=Label(loop=loop, text=text)),
                 self.textfield,
             ]),
-            buttons=[
-                Button(loop=loop, text=ok_text, handler=ok_handler),
-                Button(loop=loop, text=cancel_text, handler=cancel_handler),
-            ])
+            buttons=[ok_button, cancel_button])
 
     def __pt_container__(self):
         return self.dialog

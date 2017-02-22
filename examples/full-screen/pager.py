@@ -8,7 +8,7 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
-from prompt_toolkit.key_binding.key_bindings import KeyBindings, MergedKeyBindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
@@ -50,7 +50,7 @@ buffer_control = BufferControl(buffer=default_buffer, lexer=PygmentsLexer(Python
 root_container = HSplit([
     # The top toolbar.
     Window(content=TokenListControl(
-        get_statusbar_tokens, default_char=Char(token=Token.Status)),
+        get_statusbar_tokens), #, default_char=Char(token=Token.Status)),
         height=D.exact(1)),
 
     # The main content.
@@ -85,7 +85,7 @@ application = Application(
         root_container,
         focussed_control=buffer_control,
     ),
-    key_bindings=MergedKeyBindings([
+    key_bindings=merge_key_bindings([
         load_key_bindings(enable_search=True, enable_extra_page_navigation=True),
         bindings,
     ]),

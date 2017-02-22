@@ -398,6 +398,7 @@ class BufferControl(UIControl):
     :param focussable: `bool` or `AppFilter`: Tell whether this control is focussable.
     :param get_search_state: Callable that returns the SearchState to be used.
     :param focus_on_click: Focus this buffer when it's click, but not yet focussed.
+    :param key_bindings: a `KeyBindings` object.
     """
     def __init__(self,
                  buffer,
@@ -409,7 +410,9 @@ class BufferControl(UIControl):
                  get_search_buffer_control=None,
                  get_search_state=None,
                  menu_position=None,
-                 focus_on_click=False):
+                 focus_on_click=False,
+                 key_bindings=None):
+        from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
         assert isinstance(buffer, Buffer)
         assert input_processor is None or isinstance(input_processor, Processor)
         assert menu_position is None or callable(menu_position)
@@ -418,6 +421,7 @@ class BufferControl(UIControl):
         assert get_search_buffer_control is None or callable(get_search_buffer_control)
         assert not (search_buffer_control and get_search_buffer_control)
         assert get_search_state is None or callable(get_search_state)
+        assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
 
         # Default search state.
         if get_search_state is None:
@@ -443,6 +447,7 @@ class BufferControl(UIControl):
         self.menu_position = menu_position
         self.lexer = lexer or SimpleLexer()
         self.get_search_buffer_control = get_search_buffer_control
+        self.key_bindings = key_bindings
         self._search_buffer_control = search_buffer_control
 
         #: Cache for the lexer.
@@ -709,3 +714,10 @@ class BufferControl(UIControl):
     def move_cursor_up(self, app):
         b = self.buffer
         b.cursor_position += b.document.get_cursor_up_position()
+
+    def get_key_bindings(self, app):
+        """
+        When additional key bindings are given. Return these.
+        """
+        return UIControlKeyBindings(key_bindings=self.key_bindings)
+

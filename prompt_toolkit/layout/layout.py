@@ -50,11 +50,10 @@ class Layout(object):
 
         :param value: `UIControl` or `Window` instance.
         """
-        assert isinstance(value, (UIControl, Window))
-
         if isinstance(value, UIControl):
             self.current_control = value
-        elif isinstance(value, Window):
+        else:
+            value = to_window(value)
             self.current_window = value
 
     @property

@@ -9,6 +9,7 @@ from prompt_toolkit.layout.widgets import YesNoDialog, InputDialog
 
 __all__ = (
     'yes_no_dialog',
+    'input_dialog',
 )
 
 

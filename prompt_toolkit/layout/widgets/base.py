@@ -53,9 +53,11 @@ class TextArea(object):
     :param loop: The `EventLoop` to be used.
     :param multiline: If True, allow multiline input.
     :param password: When `True`, display using asteriks.
+    :param accept_handler: Called when `Enter` is pressed.
     """
     def __init__(self, multiline=True, password=False,
-                 lexer=None, completer=None, loop=None):
+                 lexer=None, completer=None, accept_handler=None,
+                 loop=None):
         assert loop is None or isinstance(loop, EventLoop)
 
         loop = loop or get_event_loop()
@@ -64,7 +66,8 @@ class TextArea(object):
             loop=loop,
             multiline=multiline,
             completer=completer,
-            complete_while_typing=True)
+            complete_while_typing=True,
+            accept_handler=lambda app, buffer: accept_handler(app))
 
         self.control = BufferControl(
             buffer=self.buffer,

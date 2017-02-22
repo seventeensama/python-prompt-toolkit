@@ -252,6 +252,10 @@ class Renderer(object):
         # response.
         self.waiting_for_cpr = False
 
+        # Cache for the style.
+        self._attrs_for_token = None
+        self._last_style_hash = None
+
         self.reset(_scroll=True)
 
     def reset(self, _scroll=False, leave_alternate_screen=True):
@@ -265,11 +269,6 @@ class Renderer(object):
         self._last_screen = None
         self._last_size = None
         self._last_token = None
-
-        # When the style hash changes, we have to do a full redraw as well as
-        # clear the `_attrs_for_token` dictionary.
-        self._last_style_hash = None
-        self._attrs_for_token = None
 
         # Default MouseHandlers. (Just empty.)
         self.mouse_handlers = MouseHandlers()

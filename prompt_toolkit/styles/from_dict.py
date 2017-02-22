@@ -161,7 +161,6 @@ class _StyleFromDict(Style):
             for i, part in enumerate(combo):
                 smaller_parent = combo[:i] + (part[:-1], ) + combo[i + 1:]
                 smaller_parent = filter(None, smaller_parent)
-                smaller_parent = tuple(sorted(smaller_parent))
                 if smaller_parent:
                     get_combos(smaller_parent)
         get_combos(parts)

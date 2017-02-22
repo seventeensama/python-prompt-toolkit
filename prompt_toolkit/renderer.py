@@ -157,7 +157,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
                     write_raw(zero_width_escapes_row[c])
 
                 output_char(new_char)
-                current_pos = current_pos._replace(x=current_pos.x + char_width)
+                current_pos = Point(x=current_pos.x + char_width, y=current_pos.y)
 
             c += char_width
 

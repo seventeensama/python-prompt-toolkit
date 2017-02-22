@@ -8,7 +8,7 @@ from prompt_toolkit.shortcuts.dialogs import yes_no_dialog
 
 def main():
     result = yes_no_dialog(
-        title='Example dialog window',
+        title='Yes/No dialog example',
         text='Do you want to confirm?')
 
     print('Result = {}'.format(result))

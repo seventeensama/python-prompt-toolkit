@@ -51,7 +51,8 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No'):
     return application.run()
 
 
-def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel'):
+def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
+                 password=False):
     """
     Display a text input box.
     Return the given text, or None when cancelled.
@@ -68,7 +69,8 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel'):
         ok_handler=ok_handler,
         cancel_handler=cancel_handler,
         ok_text=ok_text,
-        cancel_text=cancel_text)
+        cancel_text=cancel_text,
+        password=password)
 
     # Key bindings.
     bindings = KeyBindings()

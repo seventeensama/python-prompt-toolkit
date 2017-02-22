@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Example of an input box dialog.
+Example of an password input dialog.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.shortcuts.dialogs import input_dialog
@@ -8,8 +8,9 @@ from prompt_toolkit.shortcuts.dialogs import input_dialog
 
 def main():
     result = input_dialog(
-        title='Input dialog example',
-        text='Please type your name:')
+        title='Password dialog example',
+        text='Please type your password:',
+        password=True)
 
     print('Result = {}'.format(result))
 

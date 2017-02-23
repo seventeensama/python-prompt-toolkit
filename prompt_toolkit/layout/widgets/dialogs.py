@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import six
 from prompt_toolkit.eventloop import EventLoop, get_event_loop
 from prompt_toolkit.token import Token
-from .base import Box, Shadow, Button, Label, TextArea, Frame
+from .base import Box, Shadow, Button, Label, TextArea, Frame, RadioList
 from ..containers import VSplit, HSplit
 
 __all__ = (
@@ -13,6 +13,7 @@ __all__ = (
     'InputDialog',
     'MessageDialog',
     'YesNoDialog',
+    'RadioListDialog',
 )
 
 
@@ -139,6 +140,46 @@ class YesNoDialog(object):
                 Button(loop=loop, text=yes_text, handler=yes_handler),
                 Button(loop=loop, text=no_text, handler=no_handler),
             ])
+
+    def __pt_container__(self):
+        return self.dialog
+
+
+class RadioListDialog(object):
+    """
+    A dialog window that displays a list of radio buttons.
+
+    :param values: List of (label, value) tuples.
+    """
+    def __init__(self, values, title='', text='', ok_handler=None,
+                 cancel_handler=None, ok_text='Ok', cancel_text='Cancel',
+                 loop=None):
+        assert isinstance(title, six.text_type)
+        assert isinstance(text, six.text_type)
+        assert ok_handler is None or callable(ok_handler)
+        assert cancel_handler is None or callable(cancel_handler)
+        assert loop is None or isinstance(loop, EventLoop)
+
+        loop = loop or get_event_loop()
+
+        self.radio_list = RadioList(values, loop=loop)
+        self.dialog = Dialog(
+            loop=loop,
+            title=title,
+            body=Box(body=HSplit([
+                Label(loop=loop, text=text),
+                self.radio_list,
+            ])),
+            buttons=[
+                Button(loop=loop, text=ok_text, handler=ok_handler),
+                Button(loop=loop, text=cancel_text, handler=cancel_handler),
+            ])
+
+
+    @property
+    def current_value(self):
+        " The value of the currently selected option. "
+        return self.radio_list.current_value
 
     def __pt_container__(self):
         return self.dialog

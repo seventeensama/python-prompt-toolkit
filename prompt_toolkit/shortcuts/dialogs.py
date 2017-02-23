@@ -5,12 +5,13 @@ from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.widgets import YesNoDialog, InputDialog, MessageDialog
+from prompt_toolkit.layout.widgets import YesNoDialog, InputDialog, MessageDialog, RadioListDialog
 
 __all__ = (
     'yes_no_dialog',
     'input_dialog',
     'message_dialog',
+    'radiolist_dialog',
 )
 
 
@@ -33,22 +34,7 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No'):
         yes_text=yes_text,
         no_text=no_text)
 
-    # Key bindings.
-    bindings = KeyBindings()
-    bindings.add(Keys.Tab)(focus_next)
-    bindings.add(Keys.BackTab)(focus_previous)
-
-    application = Application(
-        layout=Layout(dialog),
-        key_bindings=merge_key_bindings([
-            load_key_bindings(),
-            bindings,
-        ]),
-        mouse_support=True,
-        use_alternate_screen=True)
-
-    # Run event loop.
-    return application.run()
+    return _run_dialog(dialog)
 
 
 def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
@@ -57,9 +43,6 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
     Display a text input box.
     Return the given text, or None when cancelled.
     """
-    def cancel_handler(app):
-        app.set_return_value(None)
-
     def ok_handler(app):
         app.set_return_value(dialog.textfield.text)
 
@@ -67,11 +50,43 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
         title=title,
         text=text,
         ok_handler=ok_handler,
-        cancel_handler=cancel_handler,
+        cancel_handler=_return_none,
         ok_text=ok_text,
         cancel_text=cancel_text,
         password=password)
 
+    return _run_dialog(dialog)
+
+
+def message_dialog(title='', text=''):
+    """
+    Display a simple message box and wait until the user presses enter.
+    """
+    return _run_dialog(MessageDialog(
+        title=title,
+        text=text,
+        ok_handler=_return_none))
+
+
+def radiolist_dialog(title='', text='', values=None):
+    """
+    Display a simple message box and wait until the user presses enter.
+    """
+    def ok_handler(app):
+        app.set_return_value(dialog.current_value)
+
+    dialog = RadioListDialog(
+        title=title,
+        text=text,
+        values=values,
+        ok_handler=ok_handler,
+        cancel_handler=_return_none)
+
+    return _run_dialog(dialog)
+
+
+def _run_dialog(dialog):
+    " Turn the `Dialog` into an `Application` and run it. "
     # Key bindings.
     bindings = KeyBindings()
     bindings.add(Keys.Tab)(focus_next)
@@ -90,26 +105,6 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
     return application.run()
 
 
-def message_dialog(title='', text=''):
-    """
-    Display a simple message box and wait until the user presses enter.
-    """
-    def done(app):
-        " Called when 'Enter' is pressed. "
-        app.set_return_value(None)
-
-    dialog = MessageDialog(
-        title=title,
-        text=text,
-        ok_handler=done)
-
-    application = Application(
-        layout=Layout(dialog),
-        key_bindings=merge_key_bindings([
-            load_key_bindings(),
-        ]),
-        mouse_support=True,
-        use_alternate_screen=True)
-
-    # Run event loop.
-    return application.run()
+def _return_none(app):
+    " Button handler that returns None. "
+    app.set_return_value(None)

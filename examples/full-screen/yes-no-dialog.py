@@ -15,7 +15,7 @@ from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, InputDialog, MessageDialog, Button, RadioButtonList, MenuContainer, MenuItem
+from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, InputDialog, MessageDialog, Button, RadioList, MenuContainer, MenuItem
 from prompt_toolkit.styles.from_pygments import style_from_pygments
 from prompt_toolkit.token import Token
 from pygments.lexers import HtmlLexer
@@ -69,7 +69,7 @@ textfield2 = TextArea()
 checkbox1 = Checkbox(text='Checkbox')
 checkbox2 = Checkbox(text='Checkbox')
 
-radios = RadioButtonList(loop=loop, values=[
+radios = RadioList(loop=loop, values=[
     ('Red', 'red'),
     ('Green', 'green'),
     ('Blue', 'blue'),

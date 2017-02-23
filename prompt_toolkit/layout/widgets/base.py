@@ -30,7 +30,7 @@ __all__ = (
     'Box',
     'VerticalLine',
     'HorizontalLine',
-    'RadioButtonList',
+    'RadioList',
 
     'Checkbox',  # XXX: refactor into CheckboxList.
 )
@@ -335,17 +335,20 @@ class Checkbox(object):
         return self.container
 
 
-class RadioButtonList(object):
+class RadioList(object):
     """
     List of radio buttons. Only one can be checked at the same time.
 
     :param values: List of (label, value) tuples.
     """
-    def __init__(self, loop, values):
+    def __init__(self, values, loop=None):
         assert isinstance(values, list)
         assert len(values) > 0
         assert all(isinstance(i, tuple) and len(i) == 2
                    for i in values)
+        assert loop is None or isinstance(loop, EventLoop)
+
+        loop = loop or get_event_loop()
 
         self.values = values
         self.current_value = values[0][1]

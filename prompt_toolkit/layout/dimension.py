@@ -99,6 +99,9 @@ def max_layout_dimensions(dimensions):
     Take the maximum of a list of :class:`.Dimension` instances.
     Used when we have a HSplit/VSplit, and we want to get the best width/height.)
     """
+    if not len(dimensions):
+        return Dimension.zero()
+
     # If all dimensions are size zero. Return zero.
     # (This is important for HSplit/VSplit, to report the right values to their
     # parent when all children are invisible.)

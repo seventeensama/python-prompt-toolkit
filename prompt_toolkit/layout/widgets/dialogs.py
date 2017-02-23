@@ -27,12 +27,13 @@ class Dialog(object):
     :param body: Another container object.
     :param buttons: A list of `Button` widgets, displayed at the bottom.
     """
-    def __init__(self, title, body, buttons, loop=None):
+    def __init__(self, title, body, buttons=None, loop=None):
         assert loop is None or isinstance(loop, EventLoop)
         assert isinstance(title, six.text_type)
-        assert isinstance(buttons, list)
+        assert buttons is None or isinstance(buttons, list)
 
         loop = loop or get_event_loop()
+        buttons = buttons or []
 
         self.container = Box(
             body=Shadow(

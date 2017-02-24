@@ -13,7 +13,7 @@ __all__ = (
 
 #: Styling of prompt-toolkit specific tokens, that are not know by the default
 #: Pygments style.
-DEFAULT_STYLE_EXTENSIONS = {
+PROMPT_TOOLKIT_STYLE = {
     # Highlighting of search matches in document.
     Token.SearchMatch:                            'noinherit reverse',
     Token.SearchMatch.Current:                    'noinherit #ffffff bg:#448844 underline',
@@ -92,11 +92,10 @@ DEFAULT_STYLE_EXTENSIONS = {
 
     # Entering a Vi digraph.
     Token.Digraph:                                '#4444ff',
+}
 
-    ###
-    ### WIDGETS
-    ###
 
+WIDGETS_STYLE = {
     # Buttons.
     Token.Button:                                 '',
     Token.Button.Arrow:                           'bold',
@@ -116,5 +115,62 @@ DEFAULT_STYLE_EXTENSIONS = {
     Token.ProgressBar:                            'bg:#000088 important',
     Token.ProgressBar.Used:                       'bg:#ff0000 important',
 }
+
+
+# Styling 
+PYGMENTS_DEFAULT_STYLE = {
+    Token.Whitespace:                "#bbbbbb",
+    Token.Comment:                   "italic #408080",
+    Token.Comment.Preproc:           "noitalic #BC7A00",
+
+    #Keyword:                   "bold #AA22FF",
+    Token.Keyword:                   "bold #008000",
+    Token.Keyword.Pseudo:            "nobold",
+    Token.Keyword.Type:              "nobold #B00040",
+
+    Token.Operator:                  "#666666",
+    Token.Operator.Word:             "bold #AA22FF",
+
+    Token.Name.Builtin:              "#008000",
+    Token.Name.Function:             "#0000FF",
+    Token.Name.Class:                "bold #0000FF",
+    Token.Name.Namespace:            "bold #0000FF",
+    Token.Name.Exception:            "bold #D2413A",
+    Token.Name.Variable:             "#19177C",
+    Token.Name.Constant:             "#880000",
+    Token.Name.Label:                "#A0A000",
+    Token.Name.Entity:               "bold #999999",
+    Token.Name.Attribute:            "#7D9029",
+    Token.Name.Tag:                  "bold #008000",
+    Token.Name.Decorator:            "#AA22FF",
+
+    Token.String:                    "#BA2121",
+    Token.String.Doc:                "italic",
+    Token.String.Interpol:           "bold #BB6688",
+    Token.String.Escape:             "bold #BB6622",
+    Token.String.Regex:              "#BB6688",
+    #Token.String.Symbol:             "#B8860B",
+    Token.String.Symbol:             "#19177C",
+    Token.String.Other:              "#008000",
+    Token.Number:                    "#666666",
+
+    Token.Generic.Heading:           "bold #000080",
+    Token.Generic.Subheading:        "bold #800080",
+    Token.Generic.Deleted:           "#A00000",
+    Token.Generic.Inserted:          "#00A000",
+    Token.Generic.Error:             "#FF0000",
+    Token.Generic.Emph:              "italic",
+    Token.Generic.Strong:            "bold",
+    Token.Generic.Prompt:            "bold #000080",
+    Token.Generic.Output:            "#888",
+    Token.Generic.Traceback:         "#04D",
+
+    Token.Error:                     "border:#FF0000"
+}
+
+DEFAULT_STYLE_EXTENSIONS = {}
+DEFAULT_STYLE_EXTENSIONS.update(PROMPT_TOOLKIT_STYLE)
+DEFAULT_STYLE_EXTENSIONS.update(WIDGETS_STYLE)
+DEFAULT_STYLE_EXTENSIONS.update(PYGMENTS_DEFAULT_STYLE)
 
 default_style_extensions = DEFAULT_STYLE_EXTENSIONS  # Old name.

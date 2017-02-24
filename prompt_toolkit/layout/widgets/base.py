@@ -117,7 +117,7 @@ class Label(object):
 
         if width is None:
             longest_line = max(get_cwidth(line) for line in text.splitlines())
-            width = D.exact(longest_line)
+            width = D(preferred=longest_line)
 
         token = Token.Label | token
 

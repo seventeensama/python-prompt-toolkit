@@ -55,14 +55,19 @@ class Win32EventLoop(EventLoop):
         if self.closed:
             raise Exception('Event loop already closed.')
 
-        self._current_timeout = INPUT_TIMEOUT_MS
-        self._running = True
+        try:
+            self._current_timeout = INPUT_TIMEOUT_MS
+            self._running = True
 
-        while not future.done():
-            self._run_once()
-        self._run_once()
+            while not future.done():
+                self._run_once()
 
-        self._running = False
+            # Run one last time, to flush the pending `_calls_from_executor`s.
+            if self._calls_from_executor:
+                self._run_once()
+
+        finally:
+            self._running = False
 
     def _run_once(self):
         # Call inputhook.

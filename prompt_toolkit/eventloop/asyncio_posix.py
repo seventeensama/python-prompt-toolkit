@@ -38,7 +38,7 @@ class PosixAsyncioEventLoop(EventLoop):
         try:
             # Create a new asyncio Future that blocks this coroutine until the
             # prompt_toolkit Future is ready.
-            stopped_f = asyncio.Future()
+            stopped_f = loop.create_future()
 
             # Block this coroutine until stop() has been called.
             @future.add_done_callback

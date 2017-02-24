@@ -9,6 +9,7 @@ This is very similar to the Pygments style dictionary, with some additions:
   The ``|`` operation can be used to combine multiple tokens.
 """
 from collections import Mapping
+import itertools
 
 from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
 from .defaults import DEFAULT_STYLE_EXTENSIONS
@@ -148,31 +149,39 @@ class _StyleFromDict(Style):
         self.token_to_attrs = token_to_attrs
 
     def get_attrs_for_token(self, token):
+        """
+        Get `Attrs` for the given token.
+        """
         # Split Token.
+        # `token` can look like: ('Dialog', ':', 'Frame': 'Scrollbar', 'Button')
+        # The split operation will split on the ':' parts.
         parts = split_token_in_parts(token)
         parts = tuple(sorted(parts))
 
-        # Find all tokens combinations that represent a parent of this token.
+        # For each part, list all prefixes.
+        # E.g. ('Scrollbar', 'Button') will become
+        #     (), ('Scrollbar', ) and ('Scrollbar', 'Button')
+        def get_possibilte_prefixes(part):
+            result = []
+            for i in range(len(part) + 1):
+                result.append(part[:i])
+            return result
+        possible_part_prefixes = [
+                get_possibilte_prefixes(p) for p in parts]
+
+        # Take the product of all possible prefixes.
         combos = []
-        def get_combos(combo):
-            combos.append(combo)
+        for comb in itertools.product(*possible_part_prefixes):
+            # (Exclude the empty parts.)
+            combos.append(tuple(sorted(p for p in comb if p)))
 
-            # Find smaller (parent) combinations.
-            for i, part in enumerate(combo):
-                smaller_parent = combo[:i] + (part[:-1], ) + combo[i + 1:]
-                smaller_parent = filter(None, smaller_parent)
-                smaller_parent = tuple(sorted(smaller_parent))
-                if smaller_parent:
-                    get_combos(smaller_parent)
-        get_combos(parts)
-
-        # Include default style.
+        # Always include default style.
         combos.append( () )
 
-        # Order them according to their importance. More precise matches have
+        # Order them according to their importance. More precise matches get
         # higher priority.
         def flattened_len(items):
-            return sum(len(i) for i in items)
+            return sum(map(len, items))
 
         combos = sorted(combos, key=flattened_len)
 

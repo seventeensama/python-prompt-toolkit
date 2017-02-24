@@ -131,9 +131,12 @@ class HSplit(Container):
     :param report_dimensions_callback: When rendering, this function is called
         with the `Application` and the list of used dimensions. (As a
         list of integers.)
+    :param width: When given, use this width instead of looking at the children.
+    :param height: When given, use this width instead of looking at the children.
     """
     def __init__(self, children, window_too_small=None, align=VerticalAlign.JUSTIFY,
-                 get_dimensions=None, report_dimensions_callback=None, padding=0, token=None):
+                 get_dimensions=None, report_dimensions_callback=None,
+                 padding=0, width=None, height=None, token=None):
         assert window_too_small is None or isinstance(window_too_small, Container)
         assert get_dimensions is None or callable(get_dimensions)
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
@@ -144,16 +147,23 @@ class HSplit(Container):
         self.get_dimensions = get_dimensions
         self.report_dimensions_callback = report_dimensions_callback
         self.padding = padding
+        self.width = width
+        self.height = height
         self.token = token
 
     def preferred_width(self, app, max_available_width):
-        if self.children:
+        if self.width is not None:
+            return to_dimension(self.width)
+        elif self.children:
             dimensions = [c.preferred_width(app, max_available_width) for c in self.children]
             return max_layout_dimensions(dimensions)
         else:
             return Dimension(0)
 
     def preferred_height(self, app, width, max_available_height):
+        if self.height is not None:
+            return to_dimension(self.height)
+
         dimensions = [c.preferred_height(app, width, max_available_height) for c in self.children]
         dimensions.append(Dimension.exact(self._total_padding))
         return sum_layout_dimensions(dimensions)
@@ -165,7 +175,10 @@ class HSplit(Container):
     @property
     def _total_padding(self):
         " Sum of the space required in between children. "
-        return self.padding * (len(self.children) - 1)
+        if self.children:
+            return self.padding * (len(self.children) - 1)
+        else:
+            return 0
 
     def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
         """
@@ -315,9 +328,12 @@ class VSplit(Container):
     :param report_dimensions_callback: When rendering, this function is called
         with the `Application` and the list of used dimensions. (As a
         list of integers.)
+    :param width: When given, use this width instead of looking at the children.
+    :param height: When given, use this width instead of looking at the children.
     """
     def __init__(self, children, window_too_small=None, align=HorizontalAlign.JUSTIFY,
-                 get_dimensions=None, report_dimensions_callback=None, padding=0, token=None):
+                 get_dimensions=None, report_dimensions_callback=None,
+                 padding=0, width=None, height=None, token=None):
         assert window_too_small is None or isinstance(window_too_small, Container)
         assert get_dimensions is None or callable(get_dimensions)
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
@@ -328,14 +344,22 @@ class VSplit(Container):
         self.get_dimensions = get_dimensions
         self.report_dimensions_callback = report_dimensions_callback
         self.padding = padding
+        self.width = width
+        self.height = height
         self.token = token
 
     def preferred_width(self, app, max_available_width):
+        if self.width is not None:
+            return to_dimension(self.width)
+
         dimensions = [c.preferred_width(app, max_available_width) for c in self.children]
         dimensions.append(Dimension.exact(self._total_padding))
         return sum_layout_dimensions(dimensions)
 
     def preferred_height(self, app, width, max_available_height):
+        if self.height is not None:
+            return to_dimension(self.height)
+
         sizes = self._divide_widths(app, width)
         if sizes is None:
             return Dimension()
@@ -351,7 +375,10 @@ class VSplit(Container):
     @property
     def _total_padding(self):
         " Sum of the space required in between children. "
-        return self.padding * (len(self.children) - 1)
+        if self.children:
+            return self.padding * (len(self.children) - 1)
+        else:
+            return 0
 
     def _divide_widths(self, app, width):
         """
@@ -1586,6 +1613,12 @@ class Window(Container):
 
         if len(token):
             new_screen.fill_area(write_position, token=token)
+
+        # Apply the 'LastLine' token to the last line of each Window. This can
+        # be used to apply an 'underline' to the user control.
+        wp = WritePosition(write_position.xpos, write_position.ypos + write_position.height - 1,
+                           write_position.width, 1)
+        new_screen.fill_area(wp, token=Token.LastLine)
 
     def _highlight_digraph(self, app, new_screen):
         """

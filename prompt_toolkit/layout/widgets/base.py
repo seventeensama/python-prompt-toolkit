@@ -17,8 +17,9 @@ from prompt_toolkit.utils import get_cwidth
 from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
 from ..controls import BufferControl, TokenListControl
 from ..dimension import Dimension as D
-from ..processors import PasswordProcessor, ConditionalProcessor
+from ..dimension import to_dimension
 from ..margins import ScrollbarMargin
+from ..processors import PasswordProcessor, ConditionalProcessor
 
 
 __all__ = (
@@ -33,6 +34,7 @@ __all__ = (
     'RadioList',
 
     'Checkbox',  # XXX: refactor into CheckboxList.
+    'ProgressBar',
 )
 
 
@@ -57,6 +59,7 @@ class TextArea(object):
     """
     def __init__(self, multiline=True, password=False,
                  lexer=None, completer=None, accept_handler=None,
+                 focussable=True, wrap_lines=True, width=None, height=None,
                  loop=None):
         assert loop is None or isinstance(loop, EventLoop)
 
@@ -75,15 +78,18 @@ class TextArea(object):
             input_processor=ConditionalProcessor(
                 processor=PasswordProcessor(),
                 filter=to_app_filter(password)
-            ))
+            ),
+            focussable=focussable)
 
-        height = D() if multiline else D.exact(1)
+        if not multiline:
+            height = D.exact(1)
 
         self.window = Window(
             height=height,
+            width=width,
             content=self.control,
             token=Token.TextArea,
-            wrap_lines=True)
+            wrap_lines=wrap_lines)
 
     @property
     def text(self):
@@ -117,7 +123,8 @@ class Label(object):
 
         self.buffer = Buffer(loop=loop, document=Document(text, 0))
         self.buffer_control = BufferControl(self.buffer, focussable=False)
-        self.window = Window(content=self.buffer_control, token=token, width=width)
+        self.window = Window(content=self.buffer_control, token=token, width=width,
+                dont_extend_height=True)
 
     def __pt_container__(self):
         return self.window
@@ -272,13 +279,20 @@ class Box(object):
     :param token: Token to be applied to this widget.
     :param char: Character to be used for filling the space around the body.
     """
-    def __init__(self, body, padding=0,
+    def __init__(self, body, padding=None,
                  padding_left=None, padding_right=None,
                  padding_top=None, padding_bottom=None,
+                 width=None, height=None,
                  token=None, char=None):
 
+        if padding is None:
+            padding = D(preferred=0)
+
         def get(value):
-            return value if value is not None else padding
+            if value is not None:
+                return to_dimension(value)
+            else:
+                return to_dimension(padding)
 
         self.padding_left = get(padding_left)
         self.padding_right = get(padding_right)
@@ -287,14 +301,14 @@ class Box(object):
         self.body = body
 
         self.container = HSplit([
-            Window(height=D(min=self.padding_top), char=char),
+            Window(height=self.padding_top, char=char),
             VSplit([
-                Window(width=D(min=self.padding_left), char=char),
+                Window(width=self.padding_left, char=char),
                 body,
-                Window(width=D(min=self.padding_right), char=char),
+                Window(width=self.padding_right, char=char),
             ]),
-            Window(height=D(min=self.padding_bottom), char=char),
-        ], token=token)
+            Window(height=self.padding_bottom, char=char),
+        ], width=width, height=height, token=token)
 
     def __pt_container__(self):
         return self.container
@@ -443,3 +457,38 @@ class HorizontalLine(object):
 
     def __pt_container__(self):
         return self.window
+
+
+class ProgressBar(object):
+    def __init__(self, loop=None):
+        loop = loop or get_event_loop()
+        self._percentage = 60
+
+        self.label = Label('60%')
+        self.container = FloatContainer(
+            content=Window(height=1),
+            floats=[
+                # We first draw the label, than the actual progress bar.  Right
+                # now, this is the only way to have the colors of the progress
+                # bar appear on to of the label. The problem is that our label
+                # can't be part of any `Window` below.
+                Float(content=self.label, top=0, bottom=0),
+
+                Float(left=0, top=0, right=0, bottom=0, content=VSplit([
+                    Window(token=Token.ProgressBar.Used, get_width=lambda app: D(weight=1 + max(1, int(self._percentage)))),   # TODO: allow zero weight!
+                    Window(token=Token.ProgressBar, get_width=lambda app: D(weight=max(1, int(100 - self._percentage)))),
+                ])),
+            ])
+
+    @property
+    def percentage(self):
+        return self._percentage
+
+    @percentage.setter
+    def percentage(self, value):
+        assert isinstance(value, int)
+        self._percentage = value
+        self.label.buffer.text = '{}%'.format(value)
+
+    def __pt_container__(self):
+        return self.container

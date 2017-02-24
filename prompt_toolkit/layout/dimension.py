@@ -3,7 +3,6 @@ Layout dimensions are used to give the minimum, maximum and preferred
 dimensions for containers and controls.
 """
 from __future__ import unicode_literals
-from collections import namedtuple
 
 __all__ = (
     'Dimension',
@@ -32,6 +31,9 @@ class Dimension(object):
     """
     def __init__(self, min=None, max=None, weight=1, preferred=None):
         assert isinstance(weight, int) and weight > 0   # Cannot be a float.
+        assert min is None or min >= 0
+        assert max is None or max >= 0
+        assert preferred is None or preferred >= 0
 
         self.min_specified = min is not None
         self.max_specified = max is not None
@@ -80,8 +82,6 @@ class Dimension(object):
         return 'Dimension(min=%r, max=%r, preferred=%r, weight=%r)' % (
             self.min, self.max, self.preferred, self.weight)
 
-#    def __add__(self, other):
-#        return sum_layout_dimensions([self, other])
 
 def sum_layout_dimensions(dimensions):
     """

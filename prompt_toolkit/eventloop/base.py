@@ -96,3 +96,11 @@ class EventLoop(with_metaclass(ABCMeta, object)):
                   but apparently, executing `time.time` is more efficient: it
                   does fewer system calls. (It doesn't read /etc/localtime.)
         """
+
+    def create_future(self):
+        """
+        Create a `Future` object that is attached to this loop.
+        This is the preferred way of creating futures.
+        """
+        from .future import Future
+        return Future(self)

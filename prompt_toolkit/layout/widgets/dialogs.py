@@ -6,7 +6,8 @@ import six
 from prompt_toolkit.eventloop import EventLoop, get_event_loop
 from prompt_toolkit.token import Token
 from .base import Box, Shadow, Button, Label, TextArea, Frame, RadioList
-from ..containers import VSplit, HSplit
+from ..containers import VSplit, HSplit, VerticalAlign
+from ..dimension import Dimension as D
 
 __all__ = (
     'Dialog',
@@ -35,19 +36,24 @@ class Dialog(object):
         loop = loop or get_event_loop()
         buttons = buttons or []
 
+        if buttons:
+            frame_body = HSplit([
+                # Wrap the content in a `Box`, so that the Dialog can
+                # be larger than the content.
+                body,
+                # The buttons.
+                Box(body=VSplit(buttons, padding=1), height=3)
+            ])
+        else:
+            frame_body = body
+
         self.container = Box(
             body=Shadow(
                 body=Frame(
                     title=title,
-                    body=HSplit([
-                        # Wrap the content in a `Box`, so that the Dialog can
-                        # be larger than the content.
-                        body,
-                        # The buttons.
-                        Box(body=VSplit(buttons, padding=1))
-                    ]),
+                    body=frame_body,
                     token=Token.Dialog.Body)),
-            padding=3,
+            padding=D(min=3),
             token=Token.Dialog)
 
     def __pt_container__(self):
@@ -86,7 +92,9 @@ class InputDialog(object):
             loop=loop,
             title=title,
             body=HSplit([
-                Box(body=Label(loop=loop, text=text)),
+                Box(body=
+                    Label(loop=loop, text=text),
+                    padding_top=1, padding_bottom=1),
                 self.textfield,
             ]),
             buttons=[ok_button, cancel_button])
@@ -110,7 +118,9 @@ class MessageDialog(object):
         self.dialog = Dialog(
             loop=loop,
             title=title,
-            body=Box(body=Label(loop=loop, text=text)),
+            body=Box(
+                body=Label(loop=loop, text=text),
+                padding_top=1, padding_bottom=0),
             buttons=[
                 Button(loop=loop, text='Ok', handler=ok_handler),
             ])

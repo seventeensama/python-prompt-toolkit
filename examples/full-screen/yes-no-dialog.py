@@ -5,17 +5,16 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.eventloop import create_event_loop, set_event_loop, get_event_loop
+from prompt_toolkit.eventloop import create_event_loop, set_event_loop
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.layout.containers import VSplit, HSplit, Window, FloatContainer, Float
-from prompt_toolkit.layout.dimension import Dimension as D
+from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Float
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, InputDialog, MessageDialog, Button, RadioList, MenuContainer, MenuItem
+from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, InputDialog, MessageDialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
 from prompt_toolkit.styles.from_pygments import style_from_pygments
 from prompt_toolkit.token import Token
 from pygments.lexers import HtmlLexer
@@ -23,29 +22,6 @@ from pygments.lexers import HtmlLexer
 
 loop = create_event_loop()
 set_event_loop(loop)
-
-
-class ProgressBar(object):
-    def __init__(self, loop=None):
-        loop = loop or get_event_loop()
-
-        self.container = FloatContainer(
-            content=Window(height=1),
-            floats=[
-                # We first draw the label, than the actual progress bar.  Right
-                # now, this is the only way to have the colors of the progress
-                # bar appear on to of the label. The problem is that our label
-                # can't be part of any `Window` below.
-                Float(content=Label('60%'), top=0, bottom=0),
-
-                Float(left=0, top=0, right=0, bottom=0, content=VSplit([
-                    Window(token=Token.ProgressBar.Used, width=D(weight=60)),
-                    Window(token=Token.ProgressBar, width=D(weight=40)),
-                ])),
-            ])
-
-    def __pt_container__(self):
-        return self.container
 
 
 # >>>
@@ -183,8 +159,6 @@ style = style_from_pygments(style_dict={
     Token.Focussed | Token.Button: 'bg:#880000 #ffffff noinherit',
 
     # Styling for Dialog widgets.
-    Token.ProgressBar: 'bg:#000088',
-    Token.ProgressBar.Used: 'bg:#ff0000',
 
     Token.RadioList | Token.Focussed: 'noreverse',
     Token.RadioList | Token.Focussed | Token.Radio.Selected: 'reverse',

@@ -11,6 +11,7 @@ __all__ = (
     'DEFAULT_ATTRS',
     'ANSI_COLOR_NAMES',
     'Style',
+    'DummyStyle',
     'DynamicStyle',
 )
 
@@ -65,6 +66,17 @@ class Style(with_metaclass(ABCMeta, object)):
         renderer knows that something in the style changed, and that everything
         has to be redrawn.
         """
+
+
+class DummyStyle(Style):
+    """
+    A style that doesn't style anything.
+    """
+    def get_attrs_for_token(self, token):
+        return DEFAULT_ATTRS
+
+    def invalidation_hash(self):
+        return 1  # Always the same value.
 
 
 class DynamicStyle(Style):

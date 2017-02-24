@@ -72,7 +72,8 @@ class PosixEventLoop(EventLoop):
                 self._run_once()
 
             # Run one last time, to flush the pending `_calls_from_executor`s.
-            self._run_once()
+            if self._calls_from_executor:
+                self._run_once()
 
         finally:
             self._running = False

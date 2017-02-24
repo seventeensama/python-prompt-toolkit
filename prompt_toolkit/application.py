@@ -5,7 +5,6 @@ from .cache import SimpleCache
 from .clipboard import Clipboard, InMemoryClipboard
 from .enums import EditingMode
 from .eventloop import EventLoop, get_event_loop
-from .eventloop.future import Future
 from .filters import AppFilter, to_app_filter
 from .filters import Condition
 from .input.base import Input
@@ -420,7 +419,7 @@ class Application(object):
         self._is_running = True
 
         loop = self.loop
-        f = Future(loop=loop)
+        f = loop.create_future()
         self.future = f  # XXX: make sure to set this before calling '_redraw'.
 
         # Reset.

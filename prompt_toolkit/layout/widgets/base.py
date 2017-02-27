@@ -81,15 +81,21 @@ class TextArea(object):
             ),
             focussable=focussable)
 
-        if not multiline:
+        if multiline:
+            margins = [
+                ScrollbarMargin(display_arrows=True),
+            ]
+        else:
             height = D.exact(1)
+            margins = []
 
         self.window = Window(
             height=height,
             width=width,
             content=self.control,
             token=Token.TextArea,
-            wrap_lines=wrap_lines)
+            wrap_lines=wrap_lines,
+            right_margins=margins)
 
     @property
     def text(self):
@@ -123,8 +129,8 @@ class Label(object):
 
         self.buffer = Buffer(loop=loop, document=Document(text, 0))
         self.buffer_control = BufferControl(self.buffer, focussable=False)
-        self.window = Window(content=self.buffer_control, token=token, width=width,
-                dont_extend_height=True)
+        self.window = Window(content=self.buffer_control, token=token,
+                             width=width, dont_extend_height=True)
 
     def __pt_container__(self):
         return self.window

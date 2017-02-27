@@ -123,11 +123,6 @@ class HSplit(Container):
     :param window_too_small: A :class:`.Container` object that is displayed if
         there is not enough space for all the children. By default, this is a
         "Window too small" message.
-    :param get_dimensions: (`None` or a callable that takes a
-        `Application` and returns a list of `Dimension`
-        instances.) By default the dimensions are taken from the children and
-        divided by the available space. However, when `get_dimensions` is specified,
-        this is taken instead.
     :param report_dimensions_callback: When rendering, this function is called
         with the `Application` and the list of used dimensions. (As a
         list of integers.)
@@ -135,16 +130,14 @@ class HSplit(Container):
     :param height: When given, use this width instead of looking at the children.
     """
     def __init__(self, children, window_too_small=None, align=VerticalAlign.JUSTIFY,
-                 get_dimensions=None, report_dimensions_callback=None,
-                 padding=0, width=None, height=None, token=None):
+                 report_dimensions_callback=None, padding=0, width=None,
+                 height=None, token=None):
         assert window_too_small is None or isinstance(window_too_small, Container)
-        assert get_dimensions is None or callable(get_dimensions)
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
 
         self.children = [to_container(c) for c in children]
         self.window_too_small = window_too_small or _window_too_small()
         self.align = align
-        self.get_dimensions = get_dimensions
         self.report_dimensions_callback = report_dimensions_callback
         self.padding = padding
         self.width = width
@@ -256,15 +249,10 @@ class HSplit(Container):
         extended_height -= self._total_padding
 
         # Calculate heights.
-        given_dimensions = self.get_dimensions(app) if self.get_dimensions else None
+        def get_dimension_for_child(c):
+             return c.preferred_height(app, write_position.width, extended_height)
 
-        def get_dimension_for_child(c, index):
-            if given_dimensions and given_dimensions[index] is not None:
-                return given_dimensions[index]
-            else:
-                return c.preferred_height(app, write_position.width, extended_height)
-
-        dimensions = [get_dimension_for_child(c, index) for index, c in enumerate(self.children)]
+        dimensions = [get_dimension_for_child(c) for c in self.children]
 
         # Sum dimensions
         sum_dimensions = sum_layout_dimensions(dimensions)
@@ -320,11 +308,6 @@ class VSplit(Container):
     :param window_too_small: A :class:`.Container` object that is displayed if
         there is not enough space for all the children. By default, this is a
         "Window too small" message.
-    :param get_dimensions: (`None` or a callable that takes a
-        `Application` and returns a list of `Dimension`
-        instances.) By default the dimensions are taken from the children and
-        divided by the available space. However, when `get_dimensions` is specified,
-        this is taken instead.
     :param report_dimensions_callback: When rendering, this function is called
         with the `Application` and the list of used dimensions. (As a
         list of integers.)
@@ -332,16 +315,14 @@ class VSplit(Container):
     :param height: When given, use this width instead of looking at the children.
     """
     def __init__(self, children, window_too_small=None, align=HorizontalAlign.JUSTIFY,
-                 get_dimensions=None, report_dimensions_callback=None,
-                 padding=0, width=None, height=None, token=None):
+                 report_dimensions_callback=None, padding=0, width=None,
+                 height=None, token=None):
         assert window_too_small is None or isinstance(window_too_small, Container)
-        assert get_dimensions is None or callable(get_dimensions)
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
 
         self.children = [to_container(c) for c in children]
         self.window_too_small = window_too_small or _window_too_small()
         self.align = align
-        self.get_dimensions = get_dimensions
         self.report_dimensions_callback = report_dimensions_callback
         self.padding = padding
         self.width = width
@@ -392,15 +373,10 @@ class VSplit(Container):
         width -= self._total_padding
 
         # Calculate widths.
-        given_dimensions = self.get_dimensions(app) if self.get_dimensions else None
+        def get_dimension_for_child(c):
+            return c.preferred_width(app, width)
 
-        def get_dimension_for_child(c, index):
-            if given_dimensions and given_dimensions[index] is not None:
-                return given_dimensions[index]
-            else:
-                return c.preferred_width(app, width)
-
-        dimensions = [get_dimension_for_child(c, index) for index, c in enumerate(self.children)]
+        dimensions = [get_dimension_for_child(c) for c in self.children]
 
         # Sum dimensions
         sum_dimensions = sum_layout_dimensions(dimensions)

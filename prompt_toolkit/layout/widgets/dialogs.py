@@ -93,7 +93,7 @@ class InputDialog(object):
             title=title,
             body=HSplit([
                 Box(body=
-                    Label(loop=loop, text=text),
+                    Label(loop=loop, text=text, dont_extend_height=True),
                     padding_top=1, padding_bottom=1),
                 self.textfield,
             ]),
@@ -119,7 +119,7 @@ class MessageDialog(object):
             loop=loop,
             title=title,
             body=Box(
-                body=Label(loop=loop, text=text),
+                body=Label(loop=loop, text=text, dont_extend_height=True),
                 padding_top=1, padding_bottom=0),
             buttons=[
                 Button(loop=loop, text='Ok', handler=ok_handler),
@@ -147,7 +147,7 @@ class YesNoDialog(object):
             loop=loop,
             title=title,
             body=Box(
-                body=Label(loop=loop, text=text),
+                body=Label(loop=loop, text=text, dont_extend_height=True),
                 padding=D.exact(1)),
             buttons=[
                 Button(loop=loop, text=yes_text, handler=yes_handler),
@@ -181,7 +181,7 @@ class RadioListDialog(object):
             title=title,
             body=Box(
                 body=HSplit([
-                    Label(loop=loop, text=text),
+                    Label(loop=loop, text=text, dont_extend_height=True),
                     self.radio_list,
                 ]),
                 padding=D.exact(1)),

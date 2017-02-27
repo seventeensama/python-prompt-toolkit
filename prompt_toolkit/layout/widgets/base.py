@@ -115,7 +115,8 @@ class Label(object):
         the text size.
     :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, text, token=Token, width=None, loop=None):
+    def __init__(self, text, token=Token, width=None, loop=None,
+                 dont_extend_height=False, dont_extend_width=False):
         assert isinstance(text, six.text_type)
         assert loop is None or isinstance(loop, EventLoop)
 
@@ -129,8 +130,9 @@ class Label(object):
 
         self.buffer = Buffer(loop=loop, document=Document(text, 0))
         self.buffer_control = BufferControl(self.buffer, focussable=False)
-        self.window = Window(content=self.buffer_control, token=token,
-                             width=width, dont_extend_height=True)
+        self.window = Window(
+            content=self.buffer_control, token=token, width=width,
+            dont_extend_height=dont_extend_height, dont_extend_width=dont_extend_width)
 
     def __pt_container__(self):
         return self.window
@@ -215,7 +217,8 @@ class Frame(object):
                 fill(width=1, height=1, char=BORDER.TOP_LEFT),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char='|'),
-                Label(' {} '.format(title), token=Token.Frame.Label, loop=loop),
+                Label(' {} '.format(title), token=Token.Frame.Label, loop=loop,
+                      dont_extend_width=True),
                 fill(width=1, height=1, char='|'),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char=BORDER.TOP_RIGHT),

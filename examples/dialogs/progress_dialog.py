@@ -11,13 +11,13 @@ def worker(set_percentage, log_text):
         for f in filenames:
             log_text('{} / {}\n'.format(dirpath, f))
             set_percentage(percentage + 1)
-            percentage += 1
-            time.sleep(.2)
+            percentage += 2
+            time.sleep(.1)
 
             if percentage == 100: break
         if percentage == 100: break
 
-    time.sleep(1)
+    time.sleep(.1)
 
 
 def main():

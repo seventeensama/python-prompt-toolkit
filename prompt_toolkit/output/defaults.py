@@ -24,6 +24,9 @@ def create_output(stdout=None, true_color=False, ansi_colors_only=None):
     true_color = to_simple_filter(true_color)
 
     if is_windows():
+        #from .windows10 import Windows10_Output
+        #return Windows10_Output(stdout)
+
         from .win32 import Win32Output
         from .conemu import ConEmuOutput
 

@@ -108,6 +108,13 @@ WIDGETS_STYLE = {
     Token.Dialog.Body | Token.TextArea:            'bg:#cccccc',
     Token.Dialog.Body | Token.TextArea | Token.LastLine: 'underline',
 
+    # Scrollbars in dialogs.
+    Token.Dialog.Body | Token.Scrollbar.Background: '',
+    Token.Dialog.Body | Token.Scrollbar.Button:     'bg:#000000',
+    Token.Dialog.Body | Token.Scrollbar.Arrow:      '',
+    Token.Dialog.Body | Token.Scrollbar.Start:      'nounderline',
+    Token.Dialog.Body | Token.Scrollbar.End:        'nounderline',
+
     # Shadows.
     Token.Dialog | Token.Shadow:                  'bg:#000088',
     Token.Dialog.Body | Token.Shadow:             'bg:#aaaaaa',

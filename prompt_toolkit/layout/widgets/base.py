@@ -402,7 +402,8 @@ class RadioList(object):
             token=Token.RadioList,
             right_margins=[
                 ScrollbarMargin(display_arrows=True),
-            ])
+            ],
+            dont_extend_height=True)
 
     def _get_tokens(self, app):
         result = []

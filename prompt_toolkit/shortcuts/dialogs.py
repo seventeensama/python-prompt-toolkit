@@ -98,7 +98,13 @@ def progress_dialog(title='', text='', run_callback=None, loop=None):
 
     loop = loop or get_event_loop()
     progressbar = ProgressBar()
-    text_area = TextArea(loop=loop, focussable=False)
+    text_area = TextArea(
+        loop=loop,
+        focussable=False,
+
+        # Prefer this text area as big as possible, to avoid having a window
+        # that keeps resizing when we add text to it.
+        height=D(preferred=10**10))
 
     dialog = Dialog(
         title,

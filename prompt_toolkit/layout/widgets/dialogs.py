@@ -146,7 +146,9 @@ class YesNoDialog(object):
         self.dialog = Dialog(
             loop=loop,
             title=title,
-            body=Box(body=Label(loop=loop, text=text)),
+            body=Box(
+                body=Label(loop=loop, text=text),
+                padding=D.exact(1)),
             buttons=[
                 Button(loop=loop, text=yes_text, handler=yes_handler),
                 Button(loop=loop, text=no_text, handler=no_handler),
@@ -177,15 +179,16 @@ class RadioListDialog(object):
         self.dialog = Dialog(
             loop=loop,
             title=title,
-            body=Box(body=HSplit([
-                Label(loop=loop, text=text),
-                self.radio_list,
-            ])),
+            body=Box(
+                body=HSplit([
+                    Label(loop=loop, text=text),
+                    self.radio_list,
+                ]),
+                padding=D.exact(1)),
             buttons=[
                 Button(loop=loop, text=ok_text, handler=ok_handler),
                 Button(loop=loop, text=cancel_text, handler=cancel_handler),
             ])
-
 
     @property
     def current_value(self):

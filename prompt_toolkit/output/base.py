@@ -149,6 +149,12 @@ class Output(with_metaclass(ABCMeta, object)):
     def disable_bracketed_paste(self):
         " For vt100 only. "
 
+    def start_rendering(self):
+        " Called when rendering starts. "
+
+    def stop_rendering(self):
+        " Called when rendering stops. "
+
 
 class DummyOutput(Output):
     """

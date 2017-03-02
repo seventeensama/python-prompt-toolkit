@@ -133,13 +133,13 @@ def accept_line(event):
 
 @register('previous-history')
 def previous_history(event):
-    " Move `back' through the history list, fetching the previous command.  "
+    " Move `back` through the history list, fetching the previous command.  "
     event.current_buffer.history_backward(count=event.arg)
 
 
 @register('next-history')
 def next_history(event):
-    " Move `forward' through the history list, fetching the next command. "
+    " Move `forward` through the history list, fetching the next command. "
     event.current_buffer.history_forward(count=event.arg)
 
 
@@ -162,7 +162,7 @@ def end_of_history(event):
 @register('reverse-search-history')
 def reverse_search_history(event):
     """
-    Search backward starting at the current line and moving `up' through
+    Search backward starting at the current line and moving `up` through
     the history as necessary. This is an incremental search.
     """
     control = event.app.layout.current_control

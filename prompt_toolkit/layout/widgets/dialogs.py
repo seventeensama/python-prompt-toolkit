@@ -6,7 +6,7 @@ import six
 from prompt_toolkit.eventloop import EventLoop, get_event_loop
 from prompt_toolkit.token import Token
 from .base import Box, Shadow, Button, Label, TextArea, Frame, RadioList
-from ..containers import VSplit, HSplit, VerticalAlign
+from ..containers import VSplit, HSplit
 from ..dimension import Dimension as D
 
 __all__ = (

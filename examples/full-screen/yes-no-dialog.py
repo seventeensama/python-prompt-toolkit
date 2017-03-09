@@ -12,6 +12,7 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindi
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Float
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, InputDialog, MessageDialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
@@ -80,6 +81,7 @@ root_container = HSplit([
         Frame(body=HSplit([
             checkbox1,
             checkbox2,
+            TextArea(),  # XXX: remove
         ], align='TOP')),
         Frame(body=radios),
     ], padding=1),
@@ -87,9 +89,9 @@ root_container = HSplit([
         body=VSplit([
             yes_button,
             no_button,
-        ], align='BOTTOM', padding=1),
-        padding=1,
+        ], align='CENTER', padding=3),
         token=Token.Buttonbar,
+        height=3,
     ),
 ])
 

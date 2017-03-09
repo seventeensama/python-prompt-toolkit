@@ -133,8 +133,6 @@ def to_dimension(value):
         return Dimension.exact(value)
     if isinstance(value, Dimension):
         return value
-    if callable(value):
-        return to_dimension(value())
 
     raise ValueError('Not an integer or Dimension object.')
 

@@ -293,15 +293,17 @@ class Box(object):
                  padding_top=None, padding_bottom=None,
                  width=None, height=None,
                  token=None, char=None):
+        #  TODO: Add aligment argument.
 
         if padding is None:
             padding = D(preferred=0)
 
         def get(value):
-            if value is not None:
-                return to_dimension(value)
-            else:
-                return to_dimension(padding)
+            if value is None:
+                value = padding
+            if isinstance(value, int):
+                value = D(min=value, preferred=value)
+            return to_dimension(value)
 
         self.padding_left = get(padding_left)
         self.padding_right = get(padding_right)

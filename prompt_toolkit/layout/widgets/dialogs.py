@@ -11,7 +11,6 @@ from ..dimension import Dimension as D
 
 __all__ = (
     'Dialog',
-    'RadioListDialog',
 )
 
 

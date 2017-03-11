@@ -10,12 +10,11 @@ from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Float
+from prompt_toolkit.layout.containers import VSplit, HSplit, Float
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, InputDialog, MessageDialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
+from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, Dialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
 from prompt_toolkit.styles.from_pygments import style_from_pygments
 from prompt_toolkit.token import Token
 from pygments.lexers import HtmlLexer
@@ -66,11 +65,8 @@ animal_completer = WordCompleter([
 root_container = HSplit([
     VSplit([
         Frame(body=Label(text='Left frame\ncontent')),
-        InputDialog(
-            'The custom window', 'This is the\nwindow content',
-            password=True, completer=animal_completer),
-        MessageDialog('The custom window',
-                      'this is\nthe other window.\nTest')
+        Dialog(title='The custom window',
+               body=Label('hello')),
     ]),
     VSplit([
         Frame(body=HSplit([

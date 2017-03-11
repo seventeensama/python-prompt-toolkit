@@ -7,7 +7,7 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindi
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.dimension import Dimension as D
-from prompt_toolkit.layout.widgets import YesNoDialog, InputDialog, MessageDialog, RadioListDialog, ProgressBar, Dialog, Button, Label, Box, TextArea
+from prompt_toolkit.layout.widgets import RadioListDialog, ProgressBar, Dialog, Button, Label, Box, TextArea
 from prompt_toolkit.layout.containers import HSplit
 
 __all__ = (
@@ -19,57 +19,85 @@ __all__ = (
 )
 
 
-def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No'):
+def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', loop=None):
     """
     Display a Yes/No dialog.
     Return a boolean.
     """
+    loop = loop or get_event_loop()
+
     def yes_handler(app):
         app.set_return_value(True)
 
     def no_handler(app):
         app.set_return_value(False)
 
-    dialog = YesNoDialog(
+    dialog = Dialog(
+        loop=loop,
         title=title,
-        text=text,
-        yes_handler=yes_handler,
-        no_handler=no_handler,
-        yes_text=yes_text,
-        no_text=no_text)
+        body=Label(loop=loop, text=text, dont_extend_height=True),
+        buttons=[
+            Button(loop=loop, text=yes_text, handler=yes_handler),
+            Button(loop=loop, text=no_text, handler=no_handler),
+        ])
+
 
     return _run_dialog(dialog)
 
 
 def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
-                 password=False):
+                 completer=None, password=False, loop=None):
     """
     Display a text input box.
     Return the given text, or None when cancelled.
     """
-    def ok_handler(app):
-        app.set_return_value(dialog.textfield.text)
+    loop = loop or get_event_loop()
 
-    dialog = InputDialog(
+    def accept(app):
+        app.layout.focus(ok_button)
+
+    def ok_handler(app):
+        app.set_return_value(textfield.text)
+
+    ok_button = Button(loop=loop, text=ok_text, handler=ok_handler)
+    cancel_button = Button(loop=loop, text=cancel_text, handler=_return_none)
+
+    textfield = TextArea(
+        loop=loop,
+        multiline=False,
+        password=password,
+        completer=completer,
+        accept_handler=accept)
+
+    dialog = Dialog(
+        loop=loop,
         title=title,
-        text=text,
-        ok_handler=ok_handler,
-        cancel_handler=_return_none,
-        ok_text=ok_text,
-        cancel_text=cancel_text,
-        password=password)
+        body=HSplit([
+            Box(body=
+                Label(loop=loop, text=text, dont_extend_height=True),
+                padding_left=0, padding_top=1, padding_bottom=1),
+            textfield,
+        ]),
+        buttons=[ok_button, cancel_button])
 
     return _run_dialog(dialog)
 
 
-def message_dialog(title='', text=''):
+def message_dialog(title='', text='', loop=None):
     """
     Display a simple message box and wait until the user presses enter.
     """
-    return _run_dialog(MessageDialog(
+    loop = loop or get_event_loop()
+
+    dialog = Dialog(
+        loop=loop,
         title=title,
-        text=text,
-        ok_handler=_return_none))
+        body=Label(loop=loop, text=text, dont_extend_height=True),
+        buttons=[
+            Button(loop=loop, text='Ok', handler=_return_none),
+        ])
+
+    return _run_dialog(dialog)
 
 
 def radiolist_dialog(title='', text='', values=None):

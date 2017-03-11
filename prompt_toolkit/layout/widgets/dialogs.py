@@ -5,23 +5,20 @@ from __future__ import unicode_literals
 import six
 from prompt_toolkit.eventloop import EventLoop, get_event_loop
 from prompt_toolkit.token import Token
-from .base import Box, Shadow, Button, Label, TextArea, Frame, RadioList
+from .base import Box, Shadow, Button, Label, Frame, RadioList
 from ..containers import VSplit, HSplit
 from ..dimension import Dimension as D
 
 __all__ = (
     'Dialog',
-    'InputDialog',
-    'MessageDialog',
-    'YesNoDialog',
     'RadioListDialog',
 )
 
 
 class Dialog(object):
     """
-    Simple dialog window. This is the base for `InputDialog`, `MessageDialog`
-    and `YesNoDialog`.
+    Simple dialog window. This is the base for input dialogs, message dialogs
+    and confirmation dialogs.
 
     :param loop: The `EventLoop` to be used.
     :param title: Text to be displayed at the top of the dialog.
@@ -58,100 +55,6 @@ class Dialog(object):
 
     def __pt_container__(self):
         return self.container
-
-
-class InputDialog(object):
-    """
-    A dialog window with one text input field.
-    """
-    def __init__(self, title='', text='', password=False, completer=None,
-                 ok_handler=None, cancel_handler=None, ok_text='Ok',
-                 cancel_text='Cancel', loop=None):
-        assert isinstance(title, six.text_type)
-        assert isinstance(text, six.text_type)
-        assert ok_handler is None or callable(ok_handler)
-        assert cancel_handler is None or callable(cancel_handler)
-        assert loop is None or isinstance(loop, EventLoop)
-
-        loop = loop or get_event_loop()
-
-        ok_button = Button(loop=loop, text=ok_text, handler=ok_handler)
-        cancel_button = Button(loop=loop, text=cancel_text, handler=cancel_handler)
-
-        def accept(app):
-            app.layout.focus(ok_button)
-
-        self.textfield = TextArea(
-            loop=loop,
-            multiline=False,
-            password=password,
-            completer=completer,
-            accept_handler=accept)
-
-        self.dialog = Dialog(
-            loop=loop,
-            title=title,
-            body=HSplit([
-                Box(body=
-                    Label(loop=loop, text=text, dont_extend_height=True),
-                    padding_left=0, padding_top=1, padding_bottom=1),
-                self.textfield,
-            ]),
-            buttons=[ok_button, cancel_button])
-
-    def __pt_container__(self):
-        return self.dialog
-
-
-class MessageDialog(object):
-    """
-    A dialog window that displays a message.
-    """
-    def __init__(self, title='', text='', ok_handler=None, loop=None):
-        assert loop is None or isinstance(loop, EventLoop)
-        assert isinstance(title, six.text_type)
-        assert isinstance(text, six.text_type)
-        assert ok_handler is None or callable(ok_handler)
-
-        loop = loop or get_event_loop()
-
-        self.dialog = Dialog(
-            loop=loop,
-            title=title,
-            body=Label(loop=loop, text=text, dont_extend_height=True),
-            buttons=[
-                Button(loop=loop, text='Ok', handler=ok_handler),
-            ])
-
-    def __pt_container__(self):
-        return self.dialog
-
-
-class YesNoDialog(object):
-    """
-    A dialog window with "Yes" and "No" buttons.
-    """
-    def __init__(self, title='', text='', yes_handler=None, no_handler=None,
-                 yes_text='Yes', no_text='No', loop=None):
-        assert isinstance(title, six.text_type)
-        assert isinstance(text, six.text_type)
-        assert yes_handler is None or callable(yes_handler)
-        assert no_handler is None or callable(no_handler)
-        assert loop is None or isinstance(loop, EventLoop)
-
-        loop = loop or get_event_loop()
-
-        self.dialog = Dialog(
-            loop=loop,
-            title=title,
-            body=Label(loop=loop, text=text, dont_extend_height=True),
-            buttons=[
-                Button(loop=loop, text=yes_text, handler=yes_handler),
-                Button(loop=loop, text=no_text, handler=no_handler),
-            ])
-
-    def __pt_container__(self):
-        return self.dialog
 
 
 class RadioListDialog(object):

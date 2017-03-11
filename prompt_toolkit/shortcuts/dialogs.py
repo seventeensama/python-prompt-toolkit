@@ -7,7 +7,7 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindi
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.dimension import Dimension as D
-from prompt_toolkit.layout.widgets import RadioListDialog, ProgressBar, Dialog, Button, Label, Box, TextArea
+from prompt_toolkit.layout.widgets import ProgressBar, Dialog, Button, Label, Box, TextArea, RadioList
 from prompt_toolkit.layout.containers import HSplit
 
 __all__ = (
@@ -83,7 +83,7 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
     return _run_dialog(dialog)
 
 
-def message_dialog(title='', text='', loop=None):
+def message_dialog(title='', text='', ok_text='Ok', loop=None):
     """
     Display a simple message box and wait until the user presses enter.
     """
@@ -94,25 +94,35 @@ def message_dialog(title='', text='', loop=None):
         title=title,
         body=Label(loop=loop, text=text, dont_extend_height=True),
         buttons=[
-            Button(loop=loop, text='Ok', handler=_return_none),
+            Button(loop=loop, text=ok_text, handler=_return_none),
         ])
 
     return _run_dialog(dialog)
 
 
-def radiolist_dialog(title='', text='', values=None):
+def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
+                     values=None, loop=None):
     """
     Display a simple message box and wait until the user presses enter.
     """
-    def ok_handler(app):
-        app.set_return_value(dialog.current_value)
+    loop = loop or get_event_loop()
 
-    dialog = RadioListDialog(
+    def ok_handler(app):
+        app.set_return_value(radio_list.current_value)
+
+    radio_list = RadioList(values, loop=loop)
+
+    dialog = Dialog(
+        loop=loop,
         title=title,
-        text=text,
-        values=values,
-        ok_handler=ok_handler,
-        cancel_handler=_return_none)
+        body=HSplit([
+            Label(loop=loop, text=text, dont_extend_height=True),
+            radio_list,
+        ], padding=1),
+        buttons=[
+            Button(loop=loop, text=ok_text, handler=ok_handler),
+            Button(loop=loop, text=cancel_text, handler=_return_none),
+        ])
 
     return _run_dialog(dialog)
 

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import six
 from prompt_toolkit.eventloop import EventLoop, get_event_loop
 from prompt_toolkit.token import Token
-from .base import Box, Shadow, Button, Label, Frame, RadioList
+from .base import Box, Shadow, Frame
 from ..containers import VSplit, HSplit
 from ..dimension import Dimension as D
 
@@ -55,42 +55,3 @@ class Dialog(object):
 
     def __pt_container__(self):
         return self.container
-
-
-class RadioListDialog(object):
-    """
-    A dialog window that displays a list of radio buttons.
-
-    :param values: List of (label, value) tuples.
-    """
-    def __init__(self, values, title='', text='', ok_handler=None,
-                 cancel_handler=None, ok_text='Ok', cancel_text='Cancel',
-                 loop=None):
-        assert isinstance(title, six.text_type)
-        assert isinstance(text, six.text_type)
-        assert ok_handler is None or callable(ok_handler)
-        assert cancel_handler is None or callable(cancel_handler)
-        assert loop is None or isinstance(loop, EventLoop)
-
-        loop = loop or get_event_loop()
-
-        self.radio_list = RadioList(values, loop=loop)
-        self.dialog = Dialog(
-            loop=loop,
-            title=title,
-            body=HSplit([
-                Label(loop=loop, text=text, dont_extend_height=True),
-                self.radio_list,
-            ], padding=1),
-            buttons=[
-                Button(loop=loop, text=ok_text, handler=ok_handler),
-                Button(loop=loop, text=cancel_text, handler=cancel_handler),
-            ])
-
-    @property
-    def current_value(self):
-        " The value of the currently selected option. "
-        return self.radio_list.current_value
-
-    def __pt_container__(self):
-        return self.dialog

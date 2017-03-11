@@ -301,8 +301,6 @@ class Box(object):
         def get(value):
             if value is None:
                 value = padding
-            if isinstance(value, int):
-                value = D(min=value, preferred=value)
             return to_dimension(value)
 
         self.padding_left = get(padding_left)

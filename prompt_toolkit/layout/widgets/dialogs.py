@@ -40,7 +40,7 @@ class Dialog(object):
             frame_body = HSplit([
                 # Wrap the content in a `Box`, so that the Dialog can
                 # be larger than the content.
-                body,
+                Box(body=body, padding=1),
                 # The buttons.
                 Box(body=VSplit(buttons, padding=1), height=3)
             ])
@@ -94,7 +94,7 @@ class InputDialog(object):
             body=HSplit([
                 Box(body=
                     Label(loop=loop, text=text, dont_extend_height=True),
-                    padding_top=1, padding_bottom=1),
+                    padding_left=0, padding_top=1, padding_bottom=1),
                 self.textfield,
             ]),
             buttons=[ok_button, cancel_button])
@@ -118,9 +118,7 @@ class MessageDialog(object):
         self.dialog = Dialog(
             loop=loop,
             title=title,
-            body=Box(
-                body=Label(loop=loop, text=text, dont_extend_height=True),
-                padding_top=1, padding_bottom=0),
+            body=Label(loop=loop, text=text, dont_extend_height=True),
             buttons=[
                 Button(loop=loop, text='Ok', handler=ok_handler),
             ])
@@ -146,9 +144,7 @@ class YesNoDialog(object):
         self.dialog = Dialog(
             loop=loop,
             title=title,
-            body=Box(
-                body=Label(loop=loop, text=text, dont_extend_height=True),
-                padding=D.exact(1)),
+            body=Label(loop=loop, text=text, dont_extend_height=True),
             buttons=[
                 Button(loop=loop, text=yes_text, handler=yes_handler),
                 Button(loop=loop, text=no_text, handler=no_handler),
@@ -179,12 +175,10 @@ class RadioListDialog(object):
         self.dialog = Dialog(
             loop=loop,
             title=title,
-            body=Box(
-                body=HSplit([
-                    Label(loop=loop, text=text, dont_extend_height=True),
-                    self.radio_list,
-                ]),
-                padding=D.exact(1)),
+            body=HSplit([
+                Label(loop=loop, text=text, dont_extend_height=True),
+                self.radio_list,
+            ], padding=1),
             buttons=[
                 Button(loop=loop, text=ok_text, handler=ok_handler),
                 Button(loop=loop, text=cancel_text, handler=cancel_handler),

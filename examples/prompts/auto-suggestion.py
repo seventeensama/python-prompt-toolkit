@@ -9,7 +9,6 @@ suggestion.
 """
 from __future__ import unicode_literals, print_function
 from prompt_toolkit import prompt
-from prompt_toolkit.application import AbortAction
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.history import InMemoryHistory
 
@@ -29,10 +28,16 @@ def main():
     print('Press Control-C to retry. Control-D to exit.')
     print()
 
-    text = prompt('Say something: ', history=history,
-                  auto_suggest=AutoSuggestFromHistory(),
-                  enable_history_search=True,
-                  on_abort=AbortAction.RETRY)
+    while True:
+        try:
+            text = prompt('Say something: ', history=history,
+                          auto_suggest=AutoSuggestFromHistory(),
+                          enable_history_search=True)
+        except KeyboardInterrupt:
+            pass  # Ctrl-C pressed. Try again.
+        else:
+            break
+
     print('You said: %s' % text)
 
 

@@ -12,7 +12,7 @@ from collections import Mapping
 import itertools
 
 from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
-from .defaults import DEFAULT_STYLE_EXTENSIONS
+from .defaults import DEFAULT_STYLE_DICTIONARY
 from .utils import merge_attrs, split_token_in_parts
 
 __all__ = (
@@ -69,7 +69,7 @@ def style_from_dict(style_dict, include_defaults=True):
 
     if include_defaults:
         s2 = {}
-        s2.update(DEFAULT_STYLE_EXTENSIONS)
+        s2.update(DEFAULT_STYLE_DICTIONARY)
         s2.update(style_dict)
         style_dict = s2
 

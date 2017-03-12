@@ -8,7 +8,6 @@ history on the items starting with the given input text.
 from __future__ import unicode_literals, print_function
 from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
-from prompt_toolkit.application import AbortAction
 
 
 def main():
@@ -26,9 +25,15 @@ def main():
     print('Press Control-C to retry. Control-D to exit.')
     print()
 
-    text = prompt('Say something: ', history=history,
-                  enable_history_search=True,
-                  on_abort=AbortAction.RETRY)
+    while True:
+        try:
+            text = prompt('Say something: ', history=history,
+                          enable_history_search=True)
+        except KeyboardInterrupt:
+            pass  # Ctrl-C pressed. Try again.
+        else:
+            break
+
     print('You said: %s' % text)
 
 

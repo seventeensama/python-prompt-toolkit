@@ -2,10 +2,12 @@
 The default styling.
 """
 from __future__ import unicode_literals
-
 from prompt_toolkit.token import Token
 
 __all__ = (
+    'DEFAULT_STYLE_DICTIONARY',
+
+    # Old names.
     'DEFAULT_STYLE_EXTENSIONS',
     'default_style_extensions',
 )
@@ -99,12 +101,12 @@ WIDGETS_STYLE = {
     # Buttons.
     Token.Button:                                 '',
     Token.Button.Arrow:                           'bold',
+    Token.Button | Token.Focussed:                'bg:#880000 #ffffff',
 
     # Dialog windows.
     Token.Dialog:                                 'bg:#4444ff',
     Token.Dialog.Body:                            'bg:#ffffff #000000',
     Token.Dialog | Token.Frame.Label:             '#ff0000 bold',
-    Token.Dialog.Body | Token.Button | Token.Focussed: 'bg:#880000 #ffffff',
     Token.Dialog.Body | Token.TextArea:            'bg:#cccccc',
     Token.Dialog.Body | Token.TextArea | Token.LastLine: 'underline',
 
@@ -124,7 +126,8 @@ WIDGETS_STYLE = {
 }
 
 
-# Styling 
+# The default Pygments style, include this by default in case a Pygments lexer
+# is used.
 PYGMENTS_DEFAULT_STYLE = {
     Token.Whitespace:                "#bbbbbb",
     Token.Comment:                   "italic #408080",
@@ -175,9 +178,14 @@ PYGMENTS_DEFAULT_STYLE = {
     Token.Error:                     "border:#FF0000"
 }
 
-DEFAULT_STYLE_EXTENSIONS = {}
-DEFAULT_STYLE_EXTENSIONS.update(PROMPT_TOOLKIT_STYLE)
-DEFAULT_STYLE_EXTENSIONS.update(WIDGETS_STYLE)
-DEFAULT_STYLE_EXTENSIONS.update(PYGMENTS_DEFAULT_STYLE)
 
-default_style_extensions = DEFAULT_STYLE_EXTENSIONS  # Old name.
+# Combine all styles in one dictionary.
+DEFAULT_STYLE_DICTIONARY = {}
+DEFAULT_STYLE_DICTIONARY.update(PROMPT_TOOLKIT_STYLE)
+DEFAULT_STYLE_DICTIONARY.update(WIDGETS_STYLE)
+DEFAULT_STYLE_DICTIONARY.update(PYGMENTS_DEFAULT_STYLE)
+
+
+# Old names.
+default_style_extensions = DEFAULT_STYLE_DICTIONARY
+DEFAULT_STYLE_EXTENSIONS = DEFAULT_STYLE_DICTIONARY

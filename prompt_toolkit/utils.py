@@ -230,7 +230,20 @@ def take_using_weights(items, weights):
     assert all(isinstance(i, int) for i in weights)
     assert len(items) == len(weights)
     assert len(items) > 0
+    assert sum(weights) > 0
 
+    # Remove items with zero-weight.
+    items2 = []
+    weights2 = []
+    for i, w in zip(items, weights):
+        if w > 0:
+            items2.append(i)
+            weights2.append(w)
+
+    items = items2
+    weights = weights2
+
+    #
     already_taken = [0 for i in items]
     item_count = len(items)
     max_weight = max(weights)

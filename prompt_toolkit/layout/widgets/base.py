@@ -1,5 +1,9 @@
 """
 Collection of reusable components for building full screen applications.
+
+All of these widgets implement the ``__pt_container__`` method, which makes
+them usable in any situation where we are expecting a `prompt_toolkit`
+container object.
 """
 from __future__ import unicode_literals
 from functools import partial
@@ -52,10 +56,26 @@ class TextArea(object):
     """
     A simple input field.
 
-    :param loop: The `EventLoop` to be used.
+    This contains a ``prompt_toolkit`` ``Buffer`` object that hold the text
+    data structure for the edited buffer, the ``BufferControl``, which applies
+    a ``Lexer`` to the text and turns it into a ``UIControl``, and finally,
+    this ``UIControl`` is wrapped in a ``Window`` object (just like any
+    ``UIControl``), which is responsible for the scrolling.
+
+    This widget does have some options, but it does not intend to cover every
+    single use case. For more configurations options, you can always build a
+    text area manually, using a ``Buffer``, ``BufferControl`` and ``Window``.
+
     :param multiline: If True, allow multiline input.
+    :param lexer: ``Lexer`` instance for syntax highlighting.
+    :param completer: ``Completer`` instance for auto completion.
+    :param focussable: When `True`, allow this widget to receive the focus.
+    :param wrap_lines: When `True`, don't scroll horizontally, but wrap lines.
+    :param width: Window width. (``Dimension`` object.)
+    :param height: Window height. (``Dimension`` object.)
     :param password: When `True`, display using asteriks.
     :param accept_handler: Called when `Enter` is pressed.
+    :param loop: The `EventLoop` to be used.
     """
     def __init__(self, multiline=True, password=False,
                  lexer=None, completer=None, accept_handler=None,
@@ -101,11 +121,15 @@ class TextArea(object):
     def text(self):
         return self.buffer.text
 
+    @text.setter
+    def text(self, value):
+        self.buffer.document = Document(value, 0)
+
     def __pt_container__(self):
         return self.window
 
 
-class Label(object):
+class Label(object):  # XXX: do we really need this??? (Maybe this is just a TextArea which is not focussable.)
     """
     Widget that displays the given text. It is not editable or focussable.
 
@@ -287,14 +311,13 @@ class Box(object):
         `padding_bottom`.
     :param token: Token to be applied to this widget.
     :param char: Character to be used for filling the space around the body.
+        (This is supposed to be a character with a terminal width of 1.)
     """
     def __init__(self, body, padding=None,
                  padding_left=None, padding_right=None,
                  padding_top=None, padding_bottom=None,
                  width=None, height=None,
                  token=None, char=None):
-        #  TODO: Add aligment argument.
-
         if padding is None:
             padding = D(preferred=0)
 
@@ -362,7 +385,8 @@ class RadioList(object):
     """
     List of radio buttons. Only one can be checked at the same time.
 
-    :param values: List of (label, value) tuples.
+    :param values: List of (value, label) tuples.
+    :param loop: The `EventLoop` to be used.
     """
     def __init__(self, values, loop=None):
         assert isinstance(values, list)
@@ -374,7 +398,7 @@ class RadioList(object):
         loop = loop or get_event_loop()
 
         self.values = values
-        self.current_value = values[0][1]
+        self.current_value = values[0][0]
         self._selected_index = 0
 
         # Key bindings.
@@ -392,7 +416,7 @@ class RadioList(object):
         @kb.add(Keys.Enter)
         @kb.add(' ')
         def _(event):
-            self.current_value = self.values[self._selected_index][1]
+            self.current_value = self.values[self._selected_index][0]
 
         # Control and window.
         self.control = TokenListControl(
@@ -411,7 +435,7 @@ class RadioList(object):
     def _get_tokens(self, app):
         result = []
         for i, value in enumerate(self.values):
-            checked = (value[1] == self.current_value)
+            checked = (value[0] == self.current_value)
             selected = (i == self._selected_index)
 
             token = Token
@@ -432,7 +456,7 @@ class RadioList(object):
 
             result.append((token, ')'))
             result.append((Token.Radio, ' '))
-            result.append((Token.Radio, value[0]))
+            result.append((Token.Radio, value[1]))
             result.append((Token, '\n'))
 
         return result
@@ -485,8 +509,8 @@ class ProgressBar(object):
                 Float(content=self.label, top=0, bottom=0),
 
                 Float(left=0, top=0, right=0, bottom=0, content=VSplit([
-                    Window(token=Token.ProgressBar.Used, get_width=lambda app: D(weight=1 + max(1, int(self._percentage)))),   # TODO: allow zero weight!
-                    Window(token=Token.ProgressBar, get_width=lambda app: D(weight=max(1, int(100 - self._percentage)))),
+                    Window(token=Token.ProgressBar.Used, get_width=lambda app: D(weight=int(self._percentage))),
+                    Window(token=Token.ProgressBar, get_width=lambda app: D(weight=int(100 - self._percentage))),
                 ])),
             ])
 

@@ -30,7 +30,7 @@ class Dimension(object):
     :param preferred: Preferred size.
     """
     def __init__(self, min=None, max=None, weight=1, preferred=None):
-        assert isinstance(weight, int) and weight > 0   # Cannot be a float.
+        assert isinstance(weight, int) and weight >= 0   # Cannot be a float.
         assert min is None or min >= 0
         assert max is None or max >= 0
         assert preferred is None or preferred >= 0

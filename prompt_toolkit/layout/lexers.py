@@ -4,7 +4,6 @@ Used for syntax highlighting.
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
-from collections import defaultdict
 from six import with_metaclass
 from six.moves import range
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Example of confirmation dialog window.
+Example of a message box window.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.shortcuts.dialogs import message_dialog

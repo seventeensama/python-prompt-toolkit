@@ -15,7 +15,6 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindi
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
-from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.token import Token
 
@@ -169,19 +168,8 @@ application = Application(
 #    -------------------
 
 def run():
-#    eventloop = create_eventloop()
-
-    try:
-
-        # Run the interface. (This runs the event loop until Ctrl-Q is pressed.)
-        application.run()
-
-    finally:
-        # Clean up. An eventloop creates a posix pipe. This is used internally
-        # for scheduling callables, created in other threads into the main
-        # eventloop. Calling `close` will close this pipe.
-#        loop.close()
-        pass
+    # Run the interface. (This runs the event loop until Ctrl-Q is pressed.)
+    application.run()
 
 if __name__ == '__main__':
     run()

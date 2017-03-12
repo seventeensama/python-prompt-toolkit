@@ -12,13 +12,11 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindi
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
-from prompt_toolkit.layout.margins import ScrollbarMargin, NumberredMargin
 from prompt_toolkit.layout.dimension import LayoutDimension as D
-from prompt_toolkit.layout.lexers import PygmentsLexer
-from prompt_toolkit.layout.processors import HighlightSearchProcessor
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.screen import Char
-from prompt_toolkit.styles import PygmentsStyle
+from prompt_toolkit.layout.lexers import PygmentsLexer
+from prompt_toolkit.layout.margins import ScrollbarMargin, NumberredMargin
+from prompt_toolkit.styles.pygments import PygmentsStyle
 from prompt_toolkit.token import Token
 
 from pygments.lexers import PythonLexer
@@ -50,8 +48,9 @@ buffer_control = BufferControl(buffer=default_buffer, lexer=PygmentsLexer(Python
 root_container = HSplit([
     # The top toolbar.
     Window(content=TokenListControl(
-        get_statusbar_tokens), #, default_char=Char(token=Token.Status)),
-        height=D.exact(1)),
+        get_statusbar_tokens),
+        height=D.exact(1),
+        token=Token.Status),
 
     # The main content.
     Window(

@@ -19,7 +19,7 @@ __all__ = (
 )
 
 
-def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', loop=None):
+def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None, loop=None):
     """
     Display a Yes/No dialog.
     Return a boolean.
@@ -42,11 +42,11 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', loop=None):
         ])
 
 
-    return _run_dialog(dialog)
+    return _run_dialog(dialog, style)
 
 
 def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
-                 completer=None, password=False, loop=None):
+                 completer=None, password=False, style=None, loop=None):
     """
     Display a text input box.
     Return the given text, or None when cancelled.
@@ -80,10 +80,10 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
         ]),
         buttons=[ok_button, cancel_button])
 
-    return _run_dialog(dialog)
+    return _run_dialog(dialog, style)
 
 
-def message_dialog(title='', text='', ok_text='Ok', loop=None):
+def message_dialog(title='', text='', ok_text='Ok', style=None, loop=None):
     """
     Display a simple message box and wait until the user presses enter.
     """
@@ -97,11 +97,11 @@ def message_dialog(title='', text='', ok_text='Ok', loop=None):
             Button(loop=loop, text=ok_text, handler=_return_none),
         ])
 
-    return _run_dialog(dialog)
+    return _run_dialog(dialog, style)
 
 
 def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
-                     values=None, loop=None):
+                     values=None, style=None, loop=None):
     """
     Display a simple message box and wait until the user presses enter.
     """
@@ -124,10 +124,10 @@ def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
             Button(loop=loop, text=cancel_text, handler=_return_none),
         ])
 
-    return _run_dialog(dialog)
+    return _run_dialog(dialog, style)
 
 
-def progress_dialog(title='', text='', run_callback=None, loop=None):
+def progress_dialog(title='', text='', run_callback=None, style=None, loop=None):
     """
     :param run_callback: A function that receives as input a `set_percentage`
         function and it does the work.
@@ -145,14 +145,14 @@ def progress_dialog(title='', text='', run_callback=None, loop=None):
         height=D(preferred=10**10))
 
     dialog = Dialog(
-        title,
         body=HSplit([
             Box(Label(loop=loop, text=text)),
             Box(text_area, padding=D.exact(1)),
             progressbar,
         ]),
+        title=title,
         loop=loop)
-    app = _create_app(dialog)
+    app = _create_app(dialog, style)
 
     def set_percentage(value):
         progressbar.percentage = int(value)
@@ -175,13 +175,13 @@ def progress_dialog(title='', text='', run_callback=None, loop=None):
     return app.run()
 
 
-def _run_dialog(dialog):
+def _run_dialog(dialog, style):
     " Turn the `Dialog` into an `Application` and run it. "
-    application = _create_app(dialog)
+    application = _create_app(dialog, style)
     return application.run()
 
 
-def _create_app(dialog):
+def _create_app(dialog, style):
     # Key bindings.
     bindings = KeyBindings()
     bindings.add(Keys.Tab)(focus_next)
@@ -194,6 +194,7 @@ def _create_app(dialog):
             bindings,
         ]),
         mouse_support=True,
+        style=style,
         use_alternate_screen=True)
 
 

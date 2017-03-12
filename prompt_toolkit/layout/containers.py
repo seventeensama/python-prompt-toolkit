@@ -35,8 +35,6 @@ __all__ = (
     'to_window',
 )
 
-Transparent = Token.Transparent
-
 
 class Container(with_metaclass(ABCMeta, object)):
     """
@@ -643,7 +641,6 @@ class FloatContainer(Container):
         (For floats that should not hide content underneath.)
         """
         wp = write_position
-        Transparent = Token.Transparent
 
         for y in range(wp.ypos, wp.ypos + wp.height):
             if y in screen.data_buffer:
@@ -651,7 +648,7 @@ class FloatContainer(Container):
 
                 for x in range(wp.xpos, wp.xpos + wp.width):
                     c = row[x]
-                    if c.char != ' ' or c.token != Transparent:
+                    if c.char != ' ':
                         return False
 
         return True
@@ -881,8 +878,7 @@ class WindowRenderInfo(object):
         """
         return (self.first_visible_line(after_scroll_offset) +
                 (self.last_visible_line(before_scroll_offset) -
-                 self.first_visible_line(after_scroll_offset)) // 2
-               )
+                 self.first_visible_line(after_scroll_offset)) // 2)
 
     @property
     def content_height(self):

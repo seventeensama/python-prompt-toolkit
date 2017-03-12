@@ -1,12 +1,13 @@
 from __future__ import unicode_literals
 
+from prompt_toolkit.utils import is_windows
 from prompt_toolkit.renderer import Output
-
+from prompt_toolkit.win32_types import STD_OUTPUT_HANDLE
 from .vt100 import Vt100_Output
 from .win32 import Win32Output
+
 from ctypes import windll, byref
 from ctypes.wintypes import DWORD
-from ..win32_types import STD_OUTPUT_HANDLE
 
 __all__ = (
     'Windows10_Output',
@@ -53,3 +54,27 @@ class Windows10_Output(object):
 
 
 Output.register(Windows10_Output)
+
+
+def is_win_vt100_enabled():
+    """
+    Returns True when we're running Windows and VT100 escape sequences are
+    supported.
+    """
+    if not is_windows():
+        return False
+
+    hconsole = windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+
+    # Get original console mode.
+    original_mode = DWORD(0)
+    windll.kernel32.GetConsoleMode(hconsole, byref(original_mode))
+
+    try:
+        # Try to enable VT100 sequences.
+        result = windll.kernel32.SetConsoleMode(hconsole, DWORD(
+            ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+
+        return result == 1
+    finally:
+        windll.kernel32.SetConsoleMode(hconsole, original_mode)

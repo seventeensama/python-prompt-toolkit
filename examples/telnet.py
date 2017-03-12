@@ -5,7 +5,6 @@ from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.contrib.telnet.application import TelnetApplication
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 from prompt_toolkit.shortcuts import Prompt
-from prompt_toolkit.application import AbortAction
 from prompt_toolkit.layout.lexers import PygmentsLexer
 
 from pygments.lexers import HtmlLexer
@@ -30,7 +29,6 @@ class ExampleApplication(TelnetApplication):
             Prompt(message='Say something: ',
                    lexer=PygmentsLexer(HtmlLexer),
                    completer=animal_completer,
-                   on_abort=AbortAction.RETRY,
                    output=telnet_connection.vt100_output).app,
             self.handle_command)
 

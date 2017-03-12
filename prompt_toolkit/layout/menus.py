@@ -10,7 +10,7 @@ from .containers import Window, HSplit, ConditionalContainer, ScrollOffsets
 from .controls import UIControl, UIContent
 from .dimension import Dimension
 from .margins import ScrollbarMargin
-from .screen import Point, Char
+from .screen import Point
 
 import math
 

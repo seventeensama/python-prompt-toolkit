@@ -11,4 +11,4 @@ from .utils import *
 
 
 #: The default built-in style.
-DEFAULT_STYLE = style_from_dict(DEFAULT_STYLE_EXTENSIONS)
+DEFAULT_STYLE = style_from_dict(DEFAULT_STYLE_DICTIONARY)

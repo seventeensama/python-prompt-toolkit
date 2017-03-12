@@ -70,6 +70,7 @@ __all__ = (
     'prompt',
     'prompt_async',
     'confirm',
+    'create_confirm_prompt',  # Used by '_display_completions_like_readline'.
 )
 
 
@@ -722,7 +723,7 @@ except SyntaxError:
             'prompt_async is only available for Python >3.5.')
 
 
-def _create_confirm_prompt(message, loop=None):
+def create_confirm_prompt(message, loop=None):
     """
     Create a `Prompt` object for the 'confirm' function.
     """
@@ -752,7 +753,7 @@ def confirm(message='Confirm (y or n) '):
     """
     Display a confirmation prompt that returns True/False.
     """
-    p = _create_confirm_prompt(message)
+    p = create_confirm_prompt(message)
     try:
         return p.prompt()
     finally:

@@ -3,7 +3,7 @@ Collection of reusable components for building full screen applications.
 """
 from __future__ import unicode_literals
 import six
-from prompt_toolkit.eventloop import EventLoop, get_event_loop
+from prompt_toolkit.eventloop import EventLoop
 from prompt_toolkit.token import Token
 from .base import Box, Shadow, Frame
 from ..containers import VSplit, HSplit
@@ -19,17 +19,16 @@ class Dialog(object):
     Simple dialog window. This is the base for input dialogs, message dialogs
     and confirmation dialogs.
 
-    :param loop: The `EventLoop` to be used.
-    :param title: Text to be displayed at the top of the dialog.
-    :param body: Another container object.
+    :param body: Child container object.
+    :param title: Text to be displayed in the heading of the dialog.
     :param buttons: A list of `Button` widgets, displayed at the bottom.
+    :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, title, body, buttons=None, loop=None):
+    def __init__(self, body, title='', buttons=None, loop=None):
         assert loop is None or isinstance(loop, EventLoop)
         assert isinstance(title, six.text_type)
         assert buttons is None or isinstance(buttons, list)
 
-        loop = loop or get_event_loop()
         buttons = buttons or []
 
         if buttons:

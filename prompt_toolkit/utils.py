@@ -230,7 +230,6 @@ def take_using_weights(items, weights):
     assert all(isinstance(i, int) for i in weights)
     assert len(items) == len(weights)
     assert len(items) > 0
-    assert sum(weights) > 0
 
     # Remove items with zero-weight.
     items2 = []
@@ -242,6 +241,10 @@ def take_using_weights(items, weights):
 
     items = items2
     weights = weights2
+
+    # Make sure that we have some items left.
+    if not items:
+        raise ValueError("Did't got any items with a positive weight.")
 
     #
     already_taken = [0 for i in items]

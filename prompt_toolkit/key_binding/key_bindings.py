@@ -39,7 +39,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.filters import AppFilter, to_app_filter, Never
-from prompt_toolkit.keys import Key, Keys
+from prompt_toolkit.keys import Keys
 
 from six import text_type, with_metaclass
 
@@ -155,7 +155,7 @@ class KeyBindings(KeyBindingsBase):
 
         assert not kwargs
         assert keys
-        assert all(isinstance(k, (Key, text_type)) for k in keys), \
+        assert all(isinstance(k, text_type) for k in keys), \
             'Key bindings should consist of Key and string (unicode) instances.'
         assert callable(save_before)
 

@@ -42,7 +42,7 @@ class _Flush(object):
 ANSI_SEQUENCES = {
     '\x1b': Keys.Escape,
 
-    '\x00': Keys.ControlSpace,  # Control-Space (Also for Ctrl-@)
+    '\x00': Keys.ControlAt,  # Control-At (Also for Ctrl-Space)
     '\x01': Keys.ControlA,  # Control-A (home)
     '\x02': Keys.ControlB,  # Control-B (emacs cursor left)
     '\x03': Keys.ControlC,  # Control-C (interrupt)
@@ -70,10 +70,12 @@ ANSI_SEQUENCES = {
     '\x19': Keys.ControlY,  # Control-Y (25)
     '\x1a': Keys.ControlZ,  # Control-Z
 
-    '\x1c': Keys.ControlBackslash,  # Both Control-\ and Ctrl-|
+    '\x1b': Keys.ControlSquareOpen,  # Both Control-[
+    '\x1c': Keys.ControlBackslash,  # Both Control-\ (also Ctrl-| )
     '\x1d': Keys.ControlSquareClose,  # Control-]
     '\x1e': Keys.ControlCircumflex,  # Control-^
     '\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hypen.)
+
     '\x7f': Keys.Backspace,  # (127) Backspace
     '\x1b[A': Keys.Up,
     '\x1b[B': Keys.Down,

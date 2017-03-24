@@ -9,7 +9,7 @@ from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import VSplit, HSplit, Layout
-from prompt_toolkit.layout.widgets import Button, Box, TextArea, Frame
+from prompt_toolkit.layout.widgets import Button, Box, TextArea, Label, Frame
 from prompt_toolkit.styles.from_dict import style_from_dict
 from prompt_toolkit.token import Token
 
@@ -43,17 +43,20 @@ text_area = TextArea(focussable=True)
 # The `Box` object ensures that padding will be inserted around the containing
 # widget. It adapts automatically, unless an explicit `padding` amount is given.
 root_container = Box(
-    VSplit([
-        Box(
-            body=HSplit(
-                [button1, button2, button3, button4],
-                padding=1),
-            padding=1,
-            token=Token.LeftPane),
-        Box(
-            body=Frame(text_area),
-            padding=1,
-            token=Token.RightPane),
+    HSplit([
+        Label(text='Press `Tab` to move the focus.'),
+        VSplit([
+            Box(
+                body=HSplit(
+                    [button1, button2, button3, button4],
+                    padding=1),
+                padding=1,
+                token=Token.LeftPane),
+            Box(
+                body=Frame(text_area),
+                padding=1,
+                token=Token.RightPane),
+        ]),
     ]),
 )
 
@@ -66,8 +69,6 @@ layout = Layout(
 kb = KeyBindings()
 kb.add(Keys.Tab)(focus_next)
 kb.add(Keys.BackTab)(focus_previous)
-kb.add(Keys.Down)(focus_next)
-kb.add(Keys.Up)(focus_previous)
 
 
 # This step is not necessary for this application.

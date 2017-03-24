@@ -39,7 +39,8 @@ class _TokenType(tuple):
         Concatenate two token types. (Compare it with an HTML element that has
         two classnames.) The styling of those two tokens will be combined.
         """
-        assert isinstance(other, _TokenType), 'Expecting Token, got %r: type=%r' % (other, type(other))
+        # NOTE: Don't put an assertion on _TokenType here. We want to be
+        #       compatible with Pygments tokens as well.
 
         try:
             return _token_or_cache[self, other]

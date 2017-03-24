@@ -159,6 +159,7 @@ Changes:
 ****
 - `run_sub_applications` returns a future instead of taking a callback.
 
+- Key() object does not exist anymore. Keys are all strings.
 
 
 

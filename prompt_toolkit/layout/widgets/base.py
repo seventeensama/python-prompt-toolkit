@@ -66,6 +66,7 @@ class TextArea(object):
     single use case. For more configurations options, you can always build a
     text area manually, using a ``Buffer``, ``BufferControl`` and ``Window``.
 
+    :param text: The initial text.
     :param multiline: If True, allow multiline input.
     :param lexer: ``Lexer`` instance for syntax highlighting.
     :param completer: ``Completer`` instance for auto completion.
@@ -75,18 +76,25 @@ class TextArea(object):
     :param height: Window height. (``Dimension`` object.)
     :param password: When `True`, display using asteriks.
     :param accept_handler: Called when `Enter` is pressed.
+    :param scrollbar: When `True`, display a scroll bar.
+    :param dont_extend_height:
+    :param dont_extend_width:
     :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, multiline=True, password=False,
+    def __init__(self, text='', multiline=True, password=False,
                  lexer=None, completer=None, accept_handler=None,
-                 focussable=True, wrap_lines=True, width=None, height=None,
-                 loop=None):
+                 focussable=True, wrap_lines=True,
+                 width=None, height=None,
+                 dont_extend_height=False, dont_extend_width=False,
+                 scrollbar=False, token=Token, loop=None):
+        assert isinstance(text, six.text_type)
         assert loop is None or isinstance(loop, EventLoop)
 
         loop = loop or get_event_loop()
 
         self.buffer = Buffer(
             loop=loop,
+            document=Document(text, 0),
             multiline=multiline,
             completer=completer,
             complete_while_typing=True,
@@ -102,9 +110,10 @@ class TextArea(object):
             focussable=focussable)
 
         if multiline:
-            margins = [
-                ScrollbarMargin(display_arrows=True),
-            ]
+            if scrollbar:
+                margins = [ScrollbarMargin(display_arrows=True)]
+            else:
+                margins = []
         else:
             height = D.exact(1)
             margins = []
@@ -112,8 +121,10 @@ class TextArea(object):
         self.window = Window(
             height=height,
             width=width,
+            dont_extend_height=dont_extend_height,
+            dont_extend_width=dont_extend_width,
             content=self.control,
-            token=Token.TextArea,
+            token=Token.TextArea|token,
             wrap_lines=wrap_lines,
             right_margins=margins)
 
@@ -129,7 +140,7 @@ class TextArea(object):
         return self.window
 
 
-class Label(object):  # XXX: do we really need this??? (Maybe this is just a TextArea which is not focussable.)
+class Label(object):
     """
     Widget that displays the given text. It is not editable or focussable.
 
@@ -140,26 +151,28 @@ class Label(object):  # XXX: do we really need this??? (Maybe this is just a Tex
     :param loop: The `EventLoop` to be used.
     """
     def __init__(self, text, token=Token, width=None, loop=None,
-                 dont_extend_height=False, dont_extend_width=False):
+                 dont_extend_height=True, dont_extend_width=False):
         assert isinstance(text, six.text_type)
         assert loop is None or isinstance(loop, EventLoop)
-
-        loop = loop or get_event_loop()
 
         if width is None:
             longest_line = max(get_cwidth(line) for line in text.splitlines())
             width = D(preferred=longest_line)
 
-        token = Token.Label | token
 
-        self.buffer = Buffer(loop=loop, document=Document(text, 0))
-        self.buffer_control = BufferControl(self.buffer, focussable=False)
-        self.window = Window(
-            content=self.buffer_control, token=token, width=width,
-            dont_extend_height=dont_extend_height, dont_extend_width=dont_extend_width)
+        self.text_area = TextArea(
+            text=text,
+            width=width,
+            token=Token.Label | token,
+            focussable=False,
+            dont_extend_height=dont_extend_height,
+            dont_extend_width=dont_extend_width,
+            loop=loop)
+
+        loop = loop or get_event_loop()
 
     def __pt_container__(self):
-        return self.window
+        return self.text_area
 
 
 class Button(object):
